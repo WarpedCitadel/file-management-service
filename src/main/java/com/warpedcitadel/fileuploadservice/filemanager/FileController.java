@@ -1,5 +1,6 @@
 package com.warpedcitadel.fileuploadservice.filemanager;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -8,30 +9,27 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
-
-// Todo | refactor rest controllers to handle only upload request
 @RestController
-@RequestMapping("/api/v1")
-public class S3Controller {
+@RequestMapping("/api/v1/")
+public class FileController {
+
 
     @Autowired
-    private S3Service s3Service;
+    private FileService fileService;
 
 
     @PostMapping("/upload")
-    public ResponseEntity<String> upload(@RequestParam("file")MultipartFile file) throws IOException {
-        s3Service.uploadFile(file);
+    public ResponseEntity<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
+        fileService.uploadFile(file);
         return ResponseEntity.ok("File uploaded successfully!");
     }
 
 
     @GetMapping("/download/{filename}")
     public ResponseEntity<byte[]> download(@PathVariable String filename) {
-        byte[] data = s3Service.downloadFile(filename);
+        byte[] data = fileService.downloadFile(filename);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment: filename=" + filename)
                 .body(data);
     }
-
-
 }
