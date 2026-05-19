@@ -4,7 +4,8 @@ public class FileMetaDataModel {
 
     private long id;
     private String fileUuid;
-    private long AppUserId;
+    private long appUserId;
+    private String appUserUuid;
     private String fileName;
     private String fileVersion;
     private String fileSize;
@@ -20,14 +21,14 @@ public class FileMetaDataModel {
         this.fileUuid = fileUuid;
     }
 
-    public FileMetaDataModel(String fileUuid, String fileName, String statusType){
-        this.fileName =fileName;
-        this.fileUuid = fileUuid;
-        this.statusType = statusType;
+    public FileMetaDataModel(String appUserUuid, String fileName, String fileVersion){
+        this.appUserUuid = appUserUuid;
+        this.fileName = fileName;
+        this.fileVersion = fileVersion;
     }
 
     public FileMetaDataModel(long appUserId, String fileName, String fileVersion, String fileSize) {
-        this.AppUserId = appUserId;
+        this.appUserId = appUserId;
         this.fileName = fileName;
         this.fileVersion = fileVersion;
         this.fileSize = fileSize;
@@ -39,7 +40,11 @@ public class FileMetaDataModel {
     }
 
     public long getAppUserId() {
-        return AppUserId;
+        return appUserId;
+    }
+
+    public String getAppUserUuid() {
+        return appUserUuid;
     }
 
     public String getFileName() {
@@ -64,7 +69,7 @@ public class FileMetaDataModel {
         return "FileMetaDataModel{" +
                 "id=" + id +
                 ", fileUuid='" + fileUuid + '\'' +
-                ", AppUserId=" + AppUserId +
+                ", appUserId=" + appUserId +
                 ", fileName='" + fileName + '\'' +
                 ", fileVersion='" + fileVersion + '\'' +
                 ", fileSize='" + fileSize + '\'' +

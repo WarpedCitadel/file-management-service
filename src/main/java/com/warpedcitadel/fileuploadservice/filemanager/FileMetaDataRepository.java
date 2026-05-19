@@ -22,7 +22,7 @@ public class FileMetaDataRepository {
 
     public int recordFileMetaData(FileMetaDataModel file){
 
-        String insertSQL = loadSQL.loadSQL("filemetadata/insert--record-filemetadata.sql");
+        String insertSQL = loadSQL.loadSQL("/filemetadata/insert--record-filemetadata.sql");
 
         try (Connection connection = wcDatabase.getConnection();
         PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {
@@ -41,7 +41,7 @@ public class FileMetaDataRepository {
             }
             return -1;
         } catch (SQLException exception) {
-            throw new RuntimeException("Failed to update file metadata to the database");
+            throw new RuntimeException("Failed to insert file metadata to the database", exception);
         }
     }
 
