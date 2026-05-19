@@ -20,10 +20,6 @@ public class FileService {
     @Autowired
     private final S3Client s3Client;
 
-    @Autowired private FileRepository repository;
-
-    private FileModel fileModel;
-
     @Value("${aws.bucket.name}")
     private String bucketName;
 
@@ -34,7 +30,6 @@ public class FileService {
     }
 
 
-    // Todo | Expand function to include metadata extraction
     public void uploadFile(MultipartFile file) throws IOException {
         s3Client.putObject(PutObjectRequest.builder()
                         .bucket(bucketName)
@@ -45,22 +40,6 @@ public class FileService {
         String objectURL = s3Client.utilities().getUrl(builder -> builder.bucket(bucketName)
                 .key(file.getOriginalFilename())).toExternalForm();
 
-
-
-
-        FileModel fileMetadata = new FileModel(1,
-                file.getOriginalFilename(),
-                objectURL,
-                "1",
-                "13KB",
-                file.getContentType(),
-                1);
-
-//        fileMetadata(fileMetadata);
-    }
-
-    public int fileMetadata(FileModel file){
-        return repository.recordFile(file);
     }
 
 

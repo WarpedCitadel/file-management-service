@@ -1,0 +1,1 @@
+insert into wc01.app_file (app_user_id, file_name, file_version, file_size) values (?, ? ,? ,?);

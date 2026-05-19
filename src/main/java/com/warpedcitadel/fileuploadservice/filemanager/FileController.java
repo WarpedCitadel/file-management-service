@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/v1/")
+@RequestMapping(path = "/file", version = "1.0")
 public class FileController {
 
 

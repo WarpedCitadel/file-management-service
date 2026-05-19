@@ -26,7 +26,7 @@ public class AwsConfig {
 
         return S3Client.builder()
                 .region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))  // uses credentials from environment
+                .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
                 .build();
     }
 }
