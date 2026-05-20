@@ -24,12 +24,4 @@ public class FileController {
         return ResponseEntity.ok("File uploaded successfully!");
     }
 
-
-//    @GetMapping("/download/{filename}")
-//    public ResponseEntity<byte[]> download(@PathVariable String filename) {
-//        byte[] data = fileService.downloadFile(filename);
-//        return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment: filename=" + filename)
-//                .body(data);
-//    }
 }

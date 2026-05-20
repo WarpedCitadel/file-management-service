@@ -6,10 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 @Repository
 public class FileMetaDataRepository {
@@ -20,12 +17,12 @@ public class FileMetaDataRepository {
     SQLFileReader loadSQL = new SQLFileReader();
 
 
-    public int recordFileMetaData(FileMetaDataModel file){
+    public String recordFileMetaData(FileMetaDataModel file){
 
         String insertSQL = loadSQL.loadSQL("/filemetadata/insert--record-filemetadata.sql");
 
         try (Connection connection = wcDatabase.getConnection();
-        PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {
+        PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
 
             insertStatement.setLong(1, file.getAppUserId());
             insertStatement.setString(2, file.getFileName());
@@ -36,16 +33,18 @@ public class FileMetaDataRepository {
 
             if (rowAffected == 1){
                 try (ResultSet resultSet = insertStatement.getGeneratedKeys()) {
-                    if (resultSet.next()) return resultSet.getInt(1);
+                    if (resultSet.next()) return resultSet.getString(2);
+                    System.out.println(resultSet.getInt(2));
                 }
             }
-            return -1;
         } catch (SQLException exception) {
             throw new RuntimeException("Failed to insert file metadata to the database", exception);
         }
+        throw new RuntimeException("Failed to retrieve object file UUID");
     }
 
 //    #### HELPER FUNCTIONS ####
+
     public long getUserByUuid(String uuid){
 
         String selectSQL = loadSQL.loadSQL("/users/select--get_app_user_id.sql");
@@ -61,8 +60,8 @@ public class FileMetaDataRepository {
                 return resultSet.getInt("id");
             }
         } catch (SQLException exception){
-            throw new RuntimeException("User with the uuid: " + uuid + "does not exist", exception);
+            throw new RuntimeException("User with the uuid: " + uuid + " does not exist", exception);
         }
-        return -1;
+        throw new RuntimeException("User id does not exist");
     }
 }

@@ -33,16 +33,16 @@ public class FileService {
 
     public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails){
 
-        recordFileMetaData(file, fileDetails);
+       String fileUUID = recordFileMetaData(file, fileDetails);
 
         try {
-            uploadFileS3(file);
+            uploadFileS3(file, fileUUID);
         } catch (IOException exception) {
             throw new RuntimeException("Failed to upload file", exception);
         }
     }
 
-    private void recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails){
+    private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails){
         long appUserid = repository.getUserByUuid(fileDetails.getAppUserUuid());
         String fileSize = getBytesToString(file);
 
@@ -53,30 +53,22 @@ public class FileService {
                 fileDetails.getFileVersion(),
                 fileSize
         );
-        repository.recordFileMetaData(metaData);
+        return repository.recordFileMetaData(metaData);
     }
 
 
-    private void uploadFileS3(MultipartFile file) throws IOException {
+    private void uploadFileS3(MultipartFile file, String fileUUID) throws IOException {
         s3Client.putObject(PutObjectRequest.builder()
                         .bucket(bucketName)
-                        .key(file.getOriginalFilename())
+                        .key(fileUUID)
                         .build(),
                 RequestBody.fromBytes(file.getBytes()));
 
         String objectURL = s3Client.utilities().getUrl(builder -> builder.bucket(bucketName)
-                .key(file.getOriginalFilename())).toExternalForm();
+                .key(fileUUID)).toExternalForm();
 
     }
 
-
-//    public byte[] downloadFile(String key) {
-//        ResponseBytes<GetObjectResponse> objectAsBytes = s3Client.getObjectAsBytes(GetObjectRequest.builder()
-//                .bucket(bucketName)
-//                .key(key)
-//                .build());
-//        return objectAsBytes.asByteArray();
-//    }
 
 //    ### HELPER FUNCTIONS ###
 
