@@ -21,9 +21,8 @@ public class FileMetaDataModel {
         this.fileUuid = fileUuid;
     }
 
-    public FileMetaDataModel(String appUserUuid, String fileName, String fileVersion){
+    public FileMetaDataModel(String appUserUuid, String fileVersion){
         this.appUserUuid = appUserUuid;
-        this.fileName = fileName;
         this.fileVersion = fileVersion;
     }
 

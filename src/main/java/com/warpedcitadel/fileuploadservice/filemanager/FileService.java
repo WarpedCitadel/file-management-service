@@ -4,13 +4,13 @@ package com.warpedcitadel.fileuploadservice.filemanager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 @Service
 public class FileService {
@@ -31,25 +31,18 @@ public class FileService {
     }
 
 
-    public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails){
-
-       String fileUUID = recordFileMetaData(file, fileDetails);
-
-        try {
-            uploadFileS3(file, fileUUID);
-        } catch (IOException exception) {
-            throw new RuntimeException("Failed to upload file", exception);
-        }
+    public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails) throws SQLException, IOException {
+        String fileUUID = recordFileMetaData(file, fileDetails);
+        uploadFileS3(file, fileUUID);
     }
 
-    private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails){
+    private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails) throws SQLException {
         long appUserid = repository.getUserByUuid(fileDetails.getAppUserUuid());
-        String fileSize = getBytesToString(file);
-
+        String fileSize = formatBytes(file);
 
         FileMetaDataModel metaData = new FileMetaDataModel(
                 appUserid,
-                fileDetails.getFileName(),
+                file.getOriginalFilename(),
                 fileDetails.getFileVersion(),
                 fileSize
         );
@@ -58,23 +51,34 @@ public class FileService {
 
 
     private void uploadFileS3(MultipartFile file, String fileUUID) throws IOException {
-        s3Client.putObject(PutObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(fileUUID)
-                        .build(),
-                RequestBody.fromBytes(file.getBytes()));
+        try {
+            s3Client.putObject(PutObjectRequest.builder()
+                            .bucket(bucketName)
+                            .key(fileUUID)
+                            .build(),
+                    RequestBody.fromBytes(file.getBytes()));
 
-        String objectURL = s3Client.utilities().getUrl(builder -> builder.bucket(bucketName)
-                .key(fileUUID)).toExternalForm();
-
+            String objectURL = s3Client.utilities().getUrl(builder -> builder.bucket(bucketName)
+                    .key(fileUUID)).toExternalForm();
+        } catch (IOException failedUploadException) {
+            throw new IOException("Failed to upload file", failedUploadException);
+        }
     }
 
 
 //    ### HELPER FUNCTIONS ###
-
-    private String getBytesToString(MultipartFile file){
+    private String formatBytes(MultipartFile file) {
         long sizeInBytes = file.getSize();
-        String convertedBytes = DataSize.ofBytes(sizeInBytes).toString();
-        return convertedBytes;
+
+        if (sizeInBytes < 1024) {
+            return sizeInBytes + "B";
+        } else {
+            sizeInBytes = sizeInBytes / 1024;
+            if (sizeInBytes < 1024) {
+                return sizeInBytes + "KB";
+            }
+            sizeInBytes = sizeInBytes / 1024;
+            return sizeInBytes + "MB";
+        }
     }
 }

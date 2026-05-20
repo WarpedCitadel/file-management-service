@@ -17,7 +17,7 @@ public class FileMetaDataRepository {
     SQLFileReader loadSQL = new SQLFileReader();
 
 
-    public String recordFileMetaData(FileMetaDataModel file){
+    public String recordFileMetaData(FileMetaDataModel file) throws SQLException {
 
         String insertSQL = loadSQL.loadSQL("/filemetadata/insert--record-filemetadata.sql");
 
@@ -38,14 +38,14 @@ public class FileMetaDataRepository {
                 }
             }
         } catch (SQLException exception) {
-            throw new RuntimeException("Failed to insert file metadata to the database", exception);
+            throw new SQLException("Failed to insert file metadata to the database", exception);
         }
-        throw new RuntimeException("Failed to retrieve object file UUID");
+        throw new SQLException("Failed to retrieve object file UUID");
     }
 
 //    #### HELPER FUNCTIONS ####
 
-    public long getUserByUuid(String uuid){
+    public long getUserByUuid(String uuid) throws SQLException {
 
         String selectSQL = loadSQL.loadSQL("/users/select--get_app_user_id.sql");
 
@@ -60,8 +60,8 @@ public class FileMetaDataRepository {
                 return resultSet.getInt("id");
             }
         } catch (SQLException exception){
-            throw new RuntimeException("User with the uuid: " + uuid + " does not exist", exception);
+            throw new SQLException("User with the uuid: " + uuid + " does not exist", exception);
         }
-        throw new RuntimeException("User id does not exist");
+        return -1;
     }
 }
