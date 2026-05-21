@@ -19,7 +19,7 @@ import java.time.Clock;
 import java.time.Instant;
 
 @RestController
-@RequestMapping(path = "/file", version = "1.0")
+@RequestMapping(path = "/user", version = "1.0")
 public class FileController {
 
 
