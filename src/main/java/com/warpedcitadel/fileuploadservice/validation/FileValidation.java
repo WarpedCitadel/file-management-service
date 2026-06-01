@@ -1,7 +1,10 @@
 package com.warpedcitadel.fileuploadservice.validation;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Service
 public class FileValidation
@@ -11,16 +14,16 @@ public class FileValidation
     Parameter: file - the multipart game file
     Return: A bool that represents if the file can be uploaded to the cloud service
      */
-    public Boolean isValidFile(MultipartFile file, String[] applicableTypes)
-    {
+    public Boolean isValidFile(MultipartFile file, String[] applicableTypes) throws MaxUploadSizeExceededException{
         //Check just to ensure there is a file
-        if (file == null || !checkFileSize(file)) return false;
+        if (file == null) return false;
+
+        //Check file size
+        if (!checkFileSize(file)) throw new MaxUploadSizeExceededException(1);
 
         //Check to see if the file's type is one of the applicable types
         for (String applicableType : applicableTypes) {
             String fileType = getFileExtension(file.getOriginalFilename());
-            System.out.println("filetype:" + fileType);
-            System.out.println("type:" + applicableType);
             if (fileType.equals(applicableType)) {
                 return true;
             }

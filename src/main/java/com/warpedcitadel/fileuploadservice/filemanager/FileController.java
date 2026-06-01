@@ -34,19 +34,20 @@ public class FileController {
                                                       @RequestPart("fileDetails") FileMetaDataModel fileDetails,
                                                       WebRequest request) throws SQLException, IOException {
 
-        if(fileValidation.isValidFile(file, new String[]{".zip"}))
-        {
-            fileService.uploadFileToS3(file, fileDetails);
-        }
-        else
-        {
-            System.out.print("Upload Fail - Invalid File");
-        }
 
-        ApiResponse fileData = new ApiResponse<>( "File uploaded", HttpStatus.CREATED.value(),
-            "PLACEHOLDER", request.getDescription(false).replace("uri=", ""),
-                Instant.now(Clock.systemUTC())
-        );
-        return new ResponseEntity<>(fileData, HttpStatus.CREATED);
+        //Validate file - checks file type and file size
+        if(fileValidation.isValidFile(file, new String[]{".zip"})) {
+            fileService.uploadFileToS3(file, fileDetails);
+
+
+            ApiResponse fileData = new ApiResponse<>("File uploaded", HttpStatus.CREATED.value(),
+                    "PLACEHOLDER", request.getDescription(false).replace("uri=", ""),
+                    Instant.now(Clock.systemUTC())
+            );
+            return new ResponseEntity<>(fileData, HttpStatus.CREATED);
+
+        }
+        ApiResponse fileData = new ApiResponse<>("File Failed to Validate", HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), "PLACEHOLDER", request.getDescription(false).replace("uri=", ""), Instant.now(Clock.systemUTC()));
+        return new ResponseEntity<>(fileData, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
 }

@@ -38,7 +38,7 @@ public class FileMetaDataRepository {
                 }
             }
         } catch (SQLException exception) {
-            throw new SQLException("Failed to insert file metadata to the database", exception);
+            throw new RuntimeException("Failed to insert file metadata to the database", exception);
         }
         throw new SQLException("Failed to retrieve object file UUID");
     }
