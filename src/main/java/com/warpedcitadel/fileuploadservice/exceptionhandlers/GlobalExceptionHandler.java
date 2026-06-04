@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -39,6 +40,20 @@ public class GlobalExceptionHandler {
         return new ApiErrorResponse(
                 "Failed upload",
                 HttpStatus.NOT_FOUND.value(),
+                errors,
+                request.getDescription(false).replace("uri=", ""),
+                Instant.now(Clock.systemUTC())
+        );
+    }
+
+    @ResponseStatus(HttpStatus.CONTENT_TOO_LARGE)
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ApiErrorResponse maxUploadSizeExceededException(MaxUploadSizeExceededException MUSEException, WebRequest request){
+        Map<String, String> errors = new HashMap<>();
+        errors.put("Message", MUSEException.getMessage());
+        return new ApiErrorResponse(
+                "File too Large",
+                HttpStatus.CONTENT_TOO_LARGE.value(),
                 errors,
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC())
