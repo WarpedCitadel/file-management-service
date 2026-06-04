@@ -23,7 +23,7 @@ jobs:
         run: chmod +x mvnw
 
       - name: Build with Maven
-        run: ./mvnw package
+        run: ./mvnw package --file pom.xml
 
   build-and-push-docker:
     needs: test-and-verify
