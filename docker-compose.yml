@@ -1,0 +1,22 @@
+services:
+  wc_local:
+    image: file-management-service/local
+    build:
+      context: ./
+      dockerfile: dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+  wc_dev:
+    image: warpedcitadel/file-management-service:dev
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+  wc_prod:
+    image: warpedcitadel/file-management-service:prod
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
