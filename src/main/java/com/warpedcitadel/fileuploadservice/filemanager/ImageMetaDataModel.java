@@ -52,7 +52,7 @@ public class ImageMetaDataModel
     {
         return fileSize;
     }
-    
+
     @Override
     public String toString() {
         return "FileMetaDataModel{" +
