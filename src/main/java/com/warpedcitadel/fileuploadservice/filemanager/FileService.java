@@ -1,6 +1,7 @@
 package com.warpedcitadel.fileuploadservice.filemanager;
 
 
+import com.warpedcitadel.fileuploadservice.validation.FileValidation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,9 @@ public class FileService {
     @Autowired
     private FileMetaDataRepository repository;
 
+    @Autowired
+    private FileValidation fileValidation;
+
 
     @Autowired
     public FileService(S3Client s3Client) {
@@ -34,6 +38,15 @@ public class FileService {
     public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails) throws SQLException, IOException {
         String fileUUID = recordFileMetaData(file, fileDetails);
         uploadFileS3(file, fileUUID);
+    }
+
+    public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws SQLException, IOException {
+        String imageUUID = recordImageMetaData(file, imageDetails);
+
+        // If we got "", then it was an incorrect file type
+        if (imageUUID.equals("")) return;
+
+        uploadFileS3(file, imageUUID);
     }
 
     private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails) throws SQLException {
@@ -63,6 +76,25 @@ public class FileService {
         } catch (IOException failedUploadException) {
             throw new IOException("Failed to upload file", failedUploadException);
         }
+    }
+
+    public String recordImageMetaData(MultipartFile file, ImageMetaDataModel imageDetails) throws SQLException
+    {
+        if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"})) return "";
+
+        System.out.println("Getting App User Id..");
+        long appUserid = repository.getUserByUuid(imageDetails.getAppUserUuid());
+        //long appUserid = 4;
+        System.out.println("App User Id: " + appUserid);
+        String fileSize = formatBytes(file);
+
+        ImageMetaDataModel imageMetaData = new ImageMetaDataModel(
+            appUserid,
+            file.getOriginalFilename(),
+            fileSize
+        );
+
+        return repository.recordImageMetaData(imageMetaData);
     }
 
 

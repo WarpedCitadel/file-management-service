@@ -50,4 +50,13 @@ public class FileController {
         ApiResponse fileData = new ApiResponse<>("File Failed to Validate", HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), "PLACEHOLDER", request.getDescription(false).replace("uri=", ""), Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
+
+    @PostMapping(value = "/upload/profile/img", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse> uploadProfileImage(@RequestPart("file")MultipartFile file, @RequestPart("fileDetails")ImageMetaDataModel fileDetails , WebRequest request) throws SQLException, IOException
+    {
+        fileService.uploadImageToS3(file, fileDetails);
+        ApiResponse fileData = new ApiResponse<>("Updated", HttpStatus.CREATED.value(),
+                "ProfileImage Updated", request.getDescription(false).replace("uri=", ""), Instant.now(Clock.systemUTC()));
+        return new ResponseEntity<>(fileData, HttpStatus.CREATED);
+    }
 }

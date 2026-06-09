@@ -19,7 +19,7 @@ public class FileValidation
         if (file == null) return false;
 
         //Check file size
-        if (!checkFileSize(file)) throw new MaxUploadSizeExceededException(1);
+        if (!checkFileSize(file, 1000000000)) throw new MaxUploadSizeExceededException(1);
 
         //Check to see if the file's type is one of the applicable types
         for (String applicableType : applicableTypes) {
@@ -34,9 +34,9 @@ public class FileValidation
     /*
     checkFileSize checks the file size, ensuring correct size.
      */
-    public Boolean checkFileSize(MultipartFile file)
+    public Boolean checkFileSize(MultipartFile file, int maxSize)
     {
-        return file.getSize() < 1000000000;
+        return file.getSize() < maxSize;
     }
 
     /*

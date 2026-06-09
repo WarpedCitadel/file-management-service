@@ -43,6 +43,36 @@ public class FileMetaDataRepository {
         throw new SQLException("Failed to retrieve object file UUID");
     }
 
+    public String recordImageMetaData(ImageMetaDataModel file) throws SQLException
+    {
+        String insertSQL = loadSQL.loadSQL("/filemetadata/update--app_user_profile_img_update.sql");
+
+        System.out.println(file.toString());
+
+        try (Connection connection = wcDatabase.getConnection();
+             PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
+
+                 insertStatement.setString(1, file.getFileName());
+                 insertStatement.setString(2, file.getFileSize());
+                 insertStatement.setLong(3, file.getAppUserId());
+
+                 int rowAffected = insertStatement.executeUpdate();
+                 System.out.println(rowAffected);
+                 if (rowAffected == 1)
+                 {
+                     try (ResultSet resultSet = insertStatement.getGeneratedKeys()) {
+                         if (resultSet.next()) return resultSet.getString(2);
+                         System.out.println(resultSet.getInt(2));
+                     }
+                 }
+
+        } catch (SQLException exception)
+        {
+            throw new RuntimeException("Failed to insert image metadata into the database", exception);
+        }
+        throw new SQLException("Failed to retrieve object file UUID");
+    }
+
 //    #### HELPER FUNCTIONS ####
 
     public long getUserByUuid(String uuid) throws SQLException {
