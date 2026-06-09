@@ -2,6 +2,7 @@ package com.warpedcitadel.fileuploadservice.filemanager;
 
 
 import com.warpedcitadel.fileuploadservice.validation.FileValidation;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class FileService {
     public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails) throws SQLException, IOException {
         String fileUUID = recordFileMetaData(file, fileDetails);
 
-        if (fileUUID.isEmpty()) return;
+        if (fileUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
 
         uploadFileS3(file, fileUUID);
     }
@@ -47,14 +48,14 @@ public class FileService {
         String imageUUID = recordImageMetaData(file, imageDetails);
 
         // If we got "", then it was an incorrect file type
-        if (imageUUID.isEmpty()) return;
+        if (imageUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
 
         uploadFileS3(file, imageUUID);
     }
 
     private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails) throws SQLException {
 
-        if (!fileValidation.isValidFile(file, new String[]{".zip"})) return "";
+        if (!fileValidation.isValidFile(file, new String[]{".zip"}, 1000000000)) return "";
 
         long appUserid = repository.getUserByUuid(fileDetails.getAppUserUuid());
         String fileSize = formatBytes(file);
@@ -86,7 +87,7 @@ public class FileService {
 
     public String recordImageMetaData(MultipartFile file, ImageMetaDataModel imageDetails) throws SQLException
     {
-        if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"})) return "";
+        if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"}, 2000000)) return "";
 
         long appUserid = repository.getUserByUuid(imageDetails.getAppUserUuid());
         String fileSize = formatBytes(file);

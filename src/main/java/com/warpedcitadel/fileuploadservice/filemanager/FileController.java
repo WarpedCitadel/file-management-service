@@ -33,13 +33,9 @@ public class FileController {
     public ResponseEntity<ApiResponse> uploadGameFile(@RequestPart("file")MultipartFile file,
                                                       @RequestPart("fileDetails") FileMetaDataModel fileDetails,
                                                       WebRequest request) throws SQLException, IOException {
-
         fileService.uploadFileToS3(file, fileDetails);
-
         ApiResponse fileData = new ApiResponse<>("File uploaded", HttpStatus.CREATED.value(),
-                "PLACEHOLDER", request.getDescription(false).replace("uri=", ""),
-                Instant.now(Clock.systemUTC())
-        );
+                "PLACEHOLDER", request.getDescription(false).replace("uri=", ""), Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.CREATED);
     }
 
