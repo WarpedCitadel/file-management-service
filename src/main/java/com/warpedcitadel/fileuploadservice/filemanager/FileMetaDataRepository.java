@@ -47,8 +47,6 @@ public class FileMetaDataRepository {
     {
         String insertSQL = loadSQL.loadSQL("/filemetadata/update--app_user_profile_img_update.sql");
 
-        System.out.println(file.toString());
-
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -57,7 +55,7 @@ public class FileMetaDataRepository {
                  insertStatement.setLong(3, file.getAppUserId());
 
                  int rowAffected = insertStatement.executeUpdate();
-                 System.out.println(rowAffected);
+
                  if (rowAffected == 1)
                  {
                      try (ResultSet resultSet = insertStatement.getGeneratedKeys()) {
