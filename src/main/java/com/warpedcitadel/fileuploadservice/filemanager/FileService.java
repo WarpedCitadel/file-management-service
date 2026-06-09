@@ -37,6 +37,9 @@ public class FileService {
 
     public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails) throws SQLException, IOException {
         String fileUUID = recordFileMetaData(file, fileDetails);
+
+        if (fileUUID.isEmpty()) return;
+
         uploadFileS3(file, fileUUID);
     }
 
@@ -44,12 +47,15 @@ public class FileService {
         String imageUUID = recordImageMetaData(file, imageDetails);
 
         // If we got "", then it was an incorrect file type
-        if (imageUUID.equals("")) return;
+        if (imageUUID.isEmpty()) return;
 
         uploadFileS3(file, imageUUID);
     }
 
     private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails) throws SQLException {
+
+        if (!fileValidation.isValidFile(file, new String[]{".zip"})) return "";
+
         long appUserid = repository.getUserByUuid(fileDetails.getAppUserUuid());
         String fileSize = formatBytes(file);
 
@@ -82,10 +88,7 @@ public class FileService {
     {
         if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"})) return "";
 
-        System.out.println("Getting App User Id..");
         long appUserid = repository.getUserByUuid(imageDetails.getAppUserUuid());
-        //long appUserid = 4;
-        System.out.println("App User Id: " + appUserid);
         String fileSize = formatBytes(file);
 
         ImageMetaDataModel imageMetaData = new ImageMetaDataModel(
