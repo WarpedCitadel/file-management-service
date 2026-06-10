@@ -14,12 +14,12 @@ public class FileValidation
     Parameter: file - the multipart game file
     Return: A bool that represents if the file can be uploaded to the cloud service
      */
-    public Boolean isValidFile(MultipartFile file, String[] applicableTypes) throws MaxUploadSizeExceededException{
+    public Boolean isValidFile(MultipartFile file, String[] applicableTypes, int maxSize) throws MaxUploadSizeExceededException{
         //Check just to ensure there is a file
         if (file == null) return false;
 
         //Check file size
-        if (!checkFileSize(file)) throw new MaxUploadSizeExceededException(1);
+        if (!checkFileSize(file, maxSize)) throw new MaxUploadSizeExceededException(1);
 
         //Check to see if the file's type is one of the applicable types
         for (String applicableType : applicableTypes) {
@@ -34,9 +34,9 @@ public class FileValidation
     /*
     checkFileSize checks the file size, ensuring correct size.
      */
-    public Boolean checkFileSize(MultipartFile file)
+    public Boolean checkFileSize(MultipartFile file, int maxSize)
     {
-        return file.getSize() < 1000000000;
+        return file.getSize() < maxSize;
     }
 
     /*
