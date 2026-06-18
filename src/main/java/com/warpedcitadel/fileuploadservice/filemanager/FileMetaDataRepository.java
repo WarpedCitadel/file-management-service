@@ -17,30 +17,29 @@ public class FileMetaDataRepository {
     SQLFileReader loadSQL = new SQLFileReader();
 
 
-    public String recordFileMetaData(FileMetaDataModel file) throws SQLException {
+    public String recordFileMetaData(FileMetaDataModel file) {
 
         String insertSQL = loadSQL.loadSQL("/filemetadata/insert--record-filemetadata.sql");
 
         try (Connection connection = wcDatabase.getConnection();
-        PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
+        PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {
 
-            insertStatement.setLong(1, file.getAppUserId());
+            insertStatement.setString(1, file.getGameProfileUUID());
             insertStatement.setString(2, file.getFileName());
             insertStatement.setString(3, file.getFileVersion());
             insertStatement.setString(4, file.getFileSize());
 
-            int rowAffected = insertStatement.executeUpdate();
+            ResultSet resultSet = insertStatement.executeQuery();
 
-            if (rowAffected == 1){
-                try (ResultSet resultSet = insertStatement.getGeneratedKeys()) {
-                    if (resultSet.next()) return resultSet.getString(2);
-                    System.out.println(resultSet.getInt(2));
-                }
+            if (resultSet.next()){
+                String fileUUID = resultSet.getString("file_uuid");
+                return fileUUID;
+            } else {
+                throw new RuntimeException("Failed to insert file metadata to the database");
             }
         } catch (SQLException exception) {
-            throw new RuntimeException("Failed to insert file metadata to the database", exception);
+            throw new RuntimeException("Could not find game profile with the UUID: " + file.getGameProfileUUID());
         }
-        throw new SQLException("Failed to retrieve object file UUID");
     }
 
     public String recordImageMetaData(ImageMetaDataModel file) throws SQLException
@@ -56,11 +55,9 @@ public class FileMetaDataRepository {
 
                  int rowAffected = insertStatement.executeUpdate();
 
-                 if (rowAffected == 1)
-                 {
+                 if (rowAffected == 1) {
                      try (ResultSet resultSet = insertStatement.getGeneratedKeys()) {
                          if (resultSet.next()) return resultSet.getString(2);
-                         System.out.println(resultSet.getInt(2));
                      }
                  }
 
@@ -73,7 +70,7 @@ public class FileMetaDataRepository {
 
 //    #### HELPER FUNCTIONS ####
 
-    public long getUserByUuid(String uuid) throws SQLException {
+    public long getUserByUuid(String uuid) {
 
         String selectSQL = loadSQL.loadSQL("/users/select--get_app_user_id.sql");
 
@@ -85,11 +82,12 @@ public class FileMetaDataRepository {
             ResultSet resultSet = selectStatement.executeQuery();
 
             if (resultSet.next()) {
-                return resultSet.getInt("id");
+                return resultSet.getLong("id");
+            } else {
+                throw new RuntimeException("User with the uuid: " + uuid + " does not exist");
             }
         } catch (SQLException exception){
-            throw new SQLException("User with the uuid: " + uuid + " does not exist", exception);
+            throw new RuntimeException("Failed to retrieve user data");
         }
-        return -1;
     }
 }

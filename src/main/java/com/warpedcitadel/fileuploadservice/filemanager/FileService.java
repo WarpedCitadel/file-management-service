@@ -36,7 +36,7 @@ public class FileService {
     }
 
 
-    public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails) throws SQLException, IOException {
+    public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails) throws IOException {
         String fileUUID = recordFileMetaData(file, fileDetails);
 
         if (fileUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
@@ -53,15 +53,14 @@ public class FileService {
         uploadFileS3(file, imageUUID);
     }
 
-    private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails) throws SQLException {
+    private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails) {
 
         if (!fileValidation.isValidFile(file, new String[]{".zip"}, 1000000000)) return "";
 
-        long appUserid = repository.getUserByUuid(fileDetails.getAppUserUuid());
         String fileSize = formatBytes(file);
 
         FileMetaDataModel metaData = new FileMetaDataModel(
-                appUserid,
+                fileDetails.getGameProfileUUID(),
                 file.getOriginalFilename(),
                 fileDetails.getFileVersion(),
                 fileSize

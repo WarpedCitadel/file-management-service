@@ -2,14 +2,13 @@ package com.warpedcitadel.fileuploadservice.filemanager;
 
 public class FileMetaDataModel {
 
-    private long id;
+    private String gameProfileUUID;
     private String fileUuid;
     private long appUserId;
     private String appUserUuid;
     private String fileName;
     private String fileVersion;
     private String fileSize;
-    private String fileType;
     private String statusType;
 
 
@@ -26,14 +25,17 @@ public class FileMetaDataModel {
         this.fileVersion = fileVersion;
     }
 
-    public FileMetaDataModel(long appUserId, String fileName, String fileVersion, String fileSize) {
-        this.appUserId = appUserId;
+    public FileMetaDataModel(String gameProfileUUID, String fileName, String fileVersion, String fileSize) {
+        this.gameProfileUUID = gameProfileUUID;
         this.fileName = fileName;
         this.fileVersion = fileVersion;
         this.fileSize = fileSize;
     }
 
 
+    public String getGameProfileUUID() {
+        return gameProfileUUID;
+    }
     public String getFileUuid() {
         return fileUuid;
     }
@@ -60,19 +62,5 @@ public class FileMetaDataModel {
 
     public String getStatusType() {
         return statusType;
-    }
-
-
-    @Override
-    public String toString() {
-        return "FileMetaDataModel{" +
-                "id=" + id +
-                ", fileUuid='" + fileUuid + '\'' +
-                ", appUserId=" + appUserId +
-                ", fileName='" + fileName + '\'' +
-                ", fileVersion='" + fileVersion + '\'' +
-                ", fileSize='" + fileSize + '\'' +
-                ", statusType='" + statusType + '\'' +
-                '}';
     }
 }

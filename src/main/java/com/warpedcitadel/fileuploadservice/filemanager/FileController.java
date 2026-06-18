@@ -2,7 +2,6 @@ package com.warpedcitadel.fileuploadservice.filemanager;
 
 
 import com.warpedcitadel.fileuploadservice.payload.ApiResponse;
-import com.warpedcitadel.fileuploadservice.validation.FileValidation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,16 +25,14 @@ public class FileController {
 
     @Autowired
     private FileService fileService;
-    @Autowired
-    private FileValidation fileValidation;
 
     @PostMapping(value = "/upload/game", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> uploadGameFile(@RequestPart("file")MultipartFile file,
                                                       @RequestPart("fileDetails") FileMetaDataModel fileDetails,
                                                       WebRequest request) throws SQLException, IOException {
         fileService.uploadFileToS3(file, fileDetails);
-        ApiResponse fileData = new ApiResponse<>("File uploaded", HttpStatus.CREATED.value(),
-                "PLACEHOLDER", request.getDescription(false).replace("uri=", ""), Instant.now(Clock.systemUTC()));
+        ApiResponse fileData = new ApiResponse<>("Upload", HttpStatus.CREATED.value(),
+                "Uploaded game file", request.getDescription(false).replace("uri=", ""), Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.CREATED);
     }
 
