@@ -1,6 +1,8 @@
 package com.warpedcitadel.fileuploadservice.filemanager;
 
 
+import com.warpedcitadel.fileuploadservice.filemanager.model.FileMetaDataModel;
+import com.warpedcitadel.fileuploadservice.filemanager.model.ImageMetaDataModel;
 import com.warpedcitadel.fileuploadservice.util.SQLFileReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;

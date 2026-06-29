@@ -1,6 +1,8 @@
 package com.warpedcitadel.fileuploadservice.filemanager;
 
 
+import com.warpedcitadel.fileuploadservice.filemanager.model.FileMetaDataModel;
+import com.warpedcitadel.fileuploadservice.filemanager.model.ImageMetaDataModel;
 import com.warpedcitadel.fileuploadservice.validation.FileValidation;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,7 @@ import java.sql.SQLException;
 @Service
 public class FileService {
 
-    @Value("${aws.bucket.name}")
+    @Value("${aws.valid-bucket.name}")
     private String bucketName;
 
     @Autowired

@@ -1,4 +1,4 @@
-package com.warpedcitadel.fileuploadservice.filemanager;
+package com.warpedcitadel.fileuploadservice.filemanager.model;
 
 public class FileMetaDataModel {
 
