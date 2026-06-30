@@ -2,6 +2,7 @@ package com.warpedcitadel.fileuploadservice.gamemanager;
 
 import com.warpedcitadel.fileuploadservice.gamemanager.dto.CloudFrontCookie;
 import com.warpedcitadel.fileuploadservice.gamemanager.dto.RequestData;
+import com.warpedcitadel.fileuploadservice.gamemanager.dto.ResponseData;
 import com.warpedcitadel.fileuploadservice.payload.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
@@ -30,10 +31,11 @@ public class GameManagerController {
 
 
     @GetMapping("/getGame")
-    public ResponseEntity<ApiResponse<String>> requestGameUrl(@RequestBody RequestData requestData,
-                                                                         WebRequest request,
-                                                                         HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<ResponseData>> requestGameUrl(@RequestBody RequestData requestData,
+                                                                    WebRequest request,
+                                                                    HttpServletResponse response) {
 
+        ResponseData responseData = gameManagerService.generateHtmlGameUrl(requestData);
         CloudFrontCookie cookie = cloudFrontCookieMaker.generateSignedCookie(requestData);
 
         addCookie(response,
@@ -48,8 +50,8 @@ public class GameManagerController {
                 "CloudFront-Key-Pair-Id",
                 cookie.keyPairId());
 
-        ApiResponse<String> fileData = new ApiResponse<>("Request Game Url", HttpStatus.OK.value(),
-                "https://www.warpedcitadel.com/games/" + requestData.fileUUID() + "/notindex.html",
+        ApiResponse<ResponseData> fileData = new ApiResponse<>("Request Game Url", HttpStatus.OK.value(),
+                responseData,
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.OK);

@@ -1,17 +1,19 @@
 package com.warpedcitadel.fileuploadservice.gamemanager;
 
 import com.warpedcitadel.fileuploadservice.gamemanager.dto.RequestData;
+import com.warpedcitadel.fileuploadservice.gamemanager.dto.ResponseData;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -34,33 +36,25 @@ public class GameManagerService {
     }
 
 
-//    public ResponseData generatePresignedUrl(RequestData requestData) {
-//
-//        try (S3Presigner presigner = S3Presigner.builder().region(Region.of(region)).build()) {
-//
-//            GetObjectRequest objectRequest = GetObjectRequest.builder()
-//                    .bucket(gameBucketName)
-//                    .key("games/" + requestData.fileUUID())
-//                    .build();
-//
-//            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-//                    .signatureDuration(Duration.ofMinutes(15))
-//                    .getObjectRequest(objectRequest)
-//                    .build();
-//
-//            PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(presignRequest);
-//
-//            ResponseData response = new ResponseData(
-//                    presignedRequest.url().toString()
-//            );
-//
-//            return response;
-//        } catch (Exception exception) {
-//
-//            throw new RuntimeException("Failed to generate presigned url for object key of " +
-//                    requestData.fileUUID(), exception);
-//        }
-//    }
+    public ResponseData generateHtmlGameUrl(RequestData requestData) {
+
+        try {
+
+            String result = findFilesByExtension(requestData);
+
+            String gameUrl = "https://www.warpedcitadel.com/" + result;
+
+            ResponseData response = new ResponseData(
+                    gameUrl
+            );
+
+            return response;
+        } catch (Exception exception) {
+
+            throw new RuntimeException("Failed to generate url for object key of " +
+                    requestData.fileUUID(), exception);
+        }
+    }
 
 
     public void extractZip(RequestData requestData) {
@@ -89,7 +83,7 @@ public class GameManagerService {
                     PutObjectRequest put =
                             PutObjectRequest.builder()
                                     .bucket(gameBucketName)
-                                    .key("games/" + requestData.fileUUID() + "/" + entry.getName())
+                                    .key("html/" + requestData.fileUUID() + "/" + entry.getName())
                                     .contentType(getContentType(entry.getName()))
                                     .build();
 
@@ -107,6 +101,7 @@ public class GameManagerService {
         }
     }
 
+
     // ## Helper functions
     private String getContentType(String filename) {
 
@@ -122,5 +117,30 @@ public class GameManagerService {
             case "wasm" -> "application/wasm";
             default -> "application/octet-stream";
         };
+    }
+
+
+    private String findFilesByExtension(RequestData requestData) {
+
+        String filePath = "html/" + requestData.fileUUID();
+        String prefix = filePath.endsWith("/") ? filePath : filePath + "/";
+
+        List<String> fileKeys = new ArrayList<>();
+
+        ListObjectsV2Request request = ListObjectsV2Request.builder()
+                .bucket(gameBucketName)
+                .prefix(prefix)
+                .build();
+
+        ListObjectsV2Iterable responses = s3Client.listObjectsV2Paginator(request);
+
+        responses.contents().stream()
+                .map(s3Object -> s3Object.key())
+                .filter(key -> key.toLowerCase().endsWith(".html"))
+                .forEach(htmlKey -> {
+                    fileKeys.add(htmlKey);
+                });
+
+        return fileKeys.getFirst();
     }
 }
