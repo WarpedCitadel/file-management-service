@@ -41,14 +41,13 @@ public class GameManagerService {
         try {
 
             String result = findFilesByExtension(requestData);
-
             String gameUrl = "https://www.warpedcitadel.com/" + result;
-
             ResponseData response = new ResponseData(
                     gameUrl
             );
 
             return response;
+
         } catch (Exception exception) {
 
             throw new RuntimeException("Failed to generate url for object key of " +
@@ -97,7 +96,9 @@ public class GameManagerService {
 
         } catch (IOException exception) {
 
-            System.out.println("Failed to get zip stream: " + exception);
+            throw new RuntimeException("Failed to unzip file contents of "
+                    + requestData.fileUUID()
+                    + " to storage", exception);
         }
     }
 
@@ -127,20 +128,27 @@ public class GameManagerService {
 
         List<String> fileKeys = new ArrayList<>();
 
-        ListObjectsV2Request request = ListObjectsV2Request.builder()
-                .bucket(gameBucketName)
-                .prefix(prefix)
-                .build();
+        try {
 
-        ListObjectsV2Iterable responses = s3Client.listObjectsV2Paginator(request);
+            ListObjectsV2Request request = ListObjectsV2Request.builder()
+                    .bucket(gameBucketName)
+                    .prefix(prefix)
+                    .build();
 
-        responses.contents().stream()
-                .map(s3Object -> s3Object.key())
-                .filter(key -> key.toLowerCase().endsWith(".html"))
-                .forEach(htmlKey -> {
-                    fileKeys.add(htmlKey);
-                });
+            ListObjectsV2Iterable responses = s3Client.listObjectsV2Paginator(request);
 
-        return fileKeys.getFirst();
+            responses.contents().stream()
+                    .map(s3Object -> s3Object.key())
+                    .filter(key -> key.toLowerCase().endsWith(".html"))
+                    .forEach(htmlKey -> {
+                        fileKeys.add(htmlKey);
+                    });
+
+            return fileKeys.getFirst();
+
+        } catch (Exception exception) {
+
+            throw new RuntimeException("Failed to retrieve game .html file");
+        }
     }
 }

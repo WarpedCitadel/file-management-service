@@ -1,4 +1,4 @@
-package com.warpedcitadel.fileuploadservice.gamemanager;
+package com.warpedcitadel.fileuploadservice.gamemanager.util;
 
 import com.warpedcitadel.fileuploadservice.gamemanager.dto.CloudFrontCookie;
 import com.warpedcitadel.fileuploadservice.gamemanager.dto.RequestData;
@@ -22,6 +22,9 @@ public class CloudFrontCookieMaker {
     @Value("classpath:keys/private_key.pem")
     private Resource privateKeyResource;
 
+    @Value("${cloud.aws.keypair}")
+    private String keyPair;
+
     public CloudFrontCookie generateSignedCookie(RequestData requestData) {
 
         try {
@@ -31,7 +34,7 @@ public class CloudFrontCookieMaker {
 
             String resource =
                     "Https://www.warpedcitadel.com" +
-                            "/games/" +
+                            "/html/" +
                             requestData.fileUUID() +
                             "/*";
 
@@ -44,7 +47,7 @@ public class CloudFrontCookieMaker {
             return new CloudFrontCookie(
                     cloudFrontBase64(policy.getBytes(StandardCharsets.UTF_8)),
                     signature,
-                    "KOJPEKMUW51MA"
+                    keyPair
             );
 
         } catch (Exception exception) {
@@ -52,6 +55,7 @@ public class CloudFrontCookieMaker {
             throw new RuntimeException("Failed generating CloudFront cookie", exception);
         }
     }
+
 
     private String createPolicy(
             String resource,
@@ -75,29 +79,38 @@ public class CloudFrontCookieMaker {
                 expiration.getEpochSecond());
     }
 
-    private String sign(String policy)
-            throws Exception {
 
-        Signature signer =
-                Signature.getInstance("SHA1withRSA");
+    private String sign(String policy) {
 
-        signer.initSign(loadPrivateKey());
+        try {
 
-        signer.update(
-                policy.getBytes(StandardCharsets.UTF_8));
+            Signature signer =
+                    Signature.getInstance("SHA1withRSA");
 
-        return cloudFrontBase64(
-                signer.sign());
+            signer.initSign(loadPrivateKey());
+
+            signer.update(
+                    policy.getBytes(StandardCharsets.UTF_8));
+
+            return cloudFrontBase64(
+                    signer.sign());
+
+        } catch (Exception exception) {
+
+            throw new RuntimeException("Failed to create signature for cookies", exception);
+        }
     }
 
-    private PrivateKey loadPrivateKey()
-            throws Exception {
 
-        String pem =
+    private PrivateKey loadPrivateKey() {
+
+        try {
+
+        String key =
                 Files.readString(
                         privateKeyResource.getFile().toPath());
 
-        pem = pem
+        key = key
                 .replace(
                         "-----BEGIN PRIVATE KEY-----",
                         "")
@@ -107,7 +120,7 @@ public class CloudFrontCookieMaker {
                 .replaceAll("\\s", "");
 
         byte[] decoded =
-                Base64.getDecoder().decode(pem);
+                Base64.getDecoder().decode(key);
 
         PKCS8EncodedKeySpec spec =
                 new PKCS8EncodedKeySpec(decoded);
@@ -115,6 +128,10 @@ public class CloudFrontCookieMaker {
         return KeyFactory
                 .getInstance("RSA")
                 .generatePrivate(spec);
+        } catch (Exception exception) {
+
+            throw new RuntimeException("Failed to load keys", exception);
+        }
     }
 
 

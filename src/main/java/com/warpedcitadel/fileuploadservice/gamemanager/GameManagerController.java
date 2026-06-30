@@ -3,6 +3,7 @@ package com.warpedcitadel.fileuploadservice.gamemanager;
 import com.warpedcitadel.fileuploadservice.gamemanager.dto.CloudFrontCookie;
 import com.warpedcitadel.fileuploadservice.gamemanager.dto.RequestData;
 import com.warpedcitadel.fileuploadservice.gamemanager.dto.ResponseData;
+import com.warpedcitadel.fileuploadservice.gamemanager.util.CloudFrontCookieMaker;
 import com.warpedcitadel.fileuploadservice.payload.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
