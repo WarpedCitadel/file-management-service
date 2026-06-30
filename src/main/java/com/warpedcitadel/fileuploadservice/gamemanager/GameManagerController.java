@@ -1,40 +1,92 @@
 package com.warpedcitadel.fileuploadservice.gamemanager;
 
+import com.warpedcitadel.fileuploadservice.gamemanager.dto.CloudFrontCookie;
 import com.warpedcitadel.fileuploadservice.gamemanager.dto.RequestData;
-import com.warpedcitadel.fileuploadservice.gamemanager.dto.ResponseData;
 import com.warpedcitadel.fileuploadservice.payload.ApiResponse;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 
 import java.time.Clock;
 import java.time.Instant;
 
 @RestController
-@RequestMapping(path = "/game", version = "1.0")
+@RequestMapping(path = "/api/games", version = "1.0")
 public class GameManagerController {
 
     private final GameManagerService gameManagerService;
+    private final CloudFrontCookieMaker cloudFrontCookieMaker;
 
-    public GameManagerController(GameManagerService gameManagerService) {
+    public GameManagerController(GameManagerService gameManagerService,
+                                 CloudFrontCookieMaker cloudFrontCookieMaker) {
+
         this.gameManagerService = gameManagerService;
+        this.cloudFrontCookieMaker = cloudFrontCookieMaker;
     }
 
 
-    @GetMapping("/presignedUrl")
-    public ResponseEntity<ApiResponse<ResponseData>> requestPresignedUrl(@RequestBody RequestData requestData, WebRequest request) {
+    @GetMapping("/getGame")
+    public ResponseEntity<ApiResponse<String>> requestGameUrl(@RequestBody RequestData requestData,
+                                                                         WebRequest request,
+                                                                         HttpServletResponse response) {
 
+        CloudFrontCookie cookie = cloudFrontCookieMaker.generateSignedCookie(requestData);
 
-        ResponseData responseData = gameManagerService.generatePresignedUrl(requestData);
-        ApiResponse fileData = new ApiResponse<>("Request Url", HttpStatus.OK.value(),
-                responseData,
+        addCookie(response,
+                "CloudFront-Policy",
+                cookie.policy());
+
+        addCookie(response,
+                "CloudFront-Signature",
+                cookie.signature());
+
+        addCookie(response,
+                "CloudFront-Key-Pair-Id",
+                cookie.keyPairId());
+
+        ApiResponse<String> fileData = new ApiResponse<>("Request Game Url", HttpStatus.OK.value(),
+                "https://www.warpedcitadel.com/games/" + requestData.fileUUID() + "/notindex.html",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.OK);
     }
+
+
+    @PostMapping("/uploadGame")
+    public ResponseEntity<ApiResponse<String>> uploadGameToS3(@RequestBody RequestData requestData, WebRequest request) {
+
+
+        gameManagerService.extractZip(requestData);
+        ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.OK.value(),
+                "Uploaded to S3",
+                request.getDescription(false).replace("uri=", ""),
+                Instant.now(Clock.systemUTC()));
+        return new ResponseEntity<>(fileData, HttpStatus.OK);
+    }
+
+    // ### HELPER Function ###
+    private void addCookie(
+            HttpServletResponse response,
+            String name,
+            String value) {
+
+        ResponseCookie cookie =
+                ResponseCookie
+                        .from(name, value)
+                        .secure(true)
+                        .httpOnly(true)
+                        .sameSite("None")
+                        .path("/")
+                        .build();
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookie.toString());
+    }
+
 
 }

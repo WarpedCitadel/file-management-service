@@ -43,8 +43,9 @@ public class FileService {
 
         if (fileUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
 
-        uploadFileS3(file, fileUUID);
+        uploadFileS3(file, "games/" + fileUUID);
     }
+
 
     public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws SQLException, IOException {
         String imageUUID = recordImageMetaData(file, imageDetails);
@@ -52,8 +53,9 @@ public class FileService {
         // If we got "", then it was an incorrect file type
         if (imageUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
 
-        uploadFileS3(file, imageUUID);
+        uploadFileS3(file, "images/" + imageUUID);
     }
+
 
     private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails) {
 
@@ -67,7 +69,25 @@ public class FileService {
                 fileDetails.getFileVersion(),
                 fileSize
         );
+
         return repository.recordFileMetaData(metaData);
+    }
+
+
+    public String recordImageMetaData(MultipartFile file, ImageMetaDataModel imageDetails) throws SQLException
+    {
+        if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"}, 2000000)) return "";
+
+        long appUserid = repository.getUserByUuid(imageDetails.getAppUserUuid());
+        String fileSize = formatBytes(file);
+
+        ImageMetaDataModel imageMetaData = new ImageMetaDataModel(
+                appUserid,
+                file.getOriginalFilename(),
+                fileSize
+        );
+
+        return repository.recordImageMetaData(imageMetaData);
     }
 
 
@@ -79,27 +99,12 @@ public class FileService {
                             .build(),
                     RequestBody.fromBytes(file.getBytes()));
 
-            String objectURL = s3Client.utilities().getUrl(builder -> builder.bucket(bucketName)
+            s3Client.utilities().getUrl(builder -> builder.bucket(bucketName)
                     .key(fileUUID)).toExternalForm();
         } catch (IOException failedUploadException) {
+
             throw new IOException("Failed to upload file", failedUploadException);
         }
-    }
-
-    public String recordImageMetaData(MultipartFile file, ImageMetaDataModel imageDetails) throws SQLException
-    {
-        if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"}, 2000000)) return "";
-
-        long appUserid = repository.getUserByUuid(imageDetails.getAppUserUuid());
-        String fileSize = formatBytes(file);
-
-        ImageMetaDataModel imageMetaData = new ImageMetaDataModel(
-            appUserid,
-            file.getOriginalFilename(),
-            fileSize
-        );
-
-        return repository.recordImageMetaData(imageMetaData);
     }
 
 
