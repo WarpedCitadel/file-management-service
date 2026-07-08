@@ -1,63 +1,50 @@
 package com.warpedcitadel.fileuploadservice.filemanager.model;
 
-public class ImageMetaDataModel
-{
-    private String fileUuid;
-    private long appUserId;
-    private String appUserUuid;
+public class ImageMetaDataModel {
+
+    private String fileUUID;
+    private String appUserUUID;
     private String fileName;
     private String fileSize;
 
-    //Empty Constructor
-    public ImageMetaDataModel()
-    {
+
+    public ImageMetaDataModel() {
 
     }
 
-    //File Uuid Only Constructor
-    public ImageMetaDataModel(String fileUuid)
-    {
-        this.fileUuid = fileUuid;
+    public ImageMetaDataModel(String fileUUID) {
+        this.fileUUID= fileUUID;
     }
 
-    //Full Constructor
-    public ImageMetaDataModel(long appUserId, String fileName, String fileSize)
-    {
-        this.appUserId = appUserId;
+    public ImageMetaDataModel(String appUserUUID, String fileName, String fileSize) {
+        this.appUserUUID = appUserUUID;
         this.fileName = fileName;
         this.fileSize = fileSize;
     }
 
-    public String getFileUuid()
-    {
-        return fileUuid;
+
+    public String getFileUUID() {
+        return fileUUID;
     }
 
-    public long getAppUserId()
-    {
-        return appUserId;
+    public String getAppUserUUID() {
+        return appUserUUID;
     }
 
-    public String getAppUserUuid()
-    {
-        return appUserUuid;
-    }
-
-    public String getFileName()
-    {
+    public String getFileName() {
         return fileName;
     }
 
-    public String getFileSize()
-    {
+    public String getFileSize() {
         return fileSize;
     }
 
+
     @Override
     public String toString() {
-        return "FileMetaDataModel{" +
-                ", fileUuid='" + fileUuid + '\'' +
-                ", appUserId=" + appUserId +
+        return "ImageMetaDataModel{" +
+                "fileUUID='" + fileUUID + '\'' +
+                ", appUserUUID='" + appUserUUID + '\'' +
                 ", fileName='" + fileName + '\'' +
                 ", fileSize='" + fileSize + '\'' +
                 '}';

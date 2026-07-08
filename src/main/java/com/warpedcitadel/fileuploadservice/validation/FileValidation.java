@@ -21,19 +21,21 @@ public class FileValidation
 
         //Check to see if the file's type is one of the applicable types
         for (String applicableType : applicableTypes) {
+
             String fileType = getFileExtension(file.getOriginalFilename());
             if (fileType.equals(applicableType)) {
+
                 return true;
             }
         }
+
         return false;
     }
 
     /*
     checkFileSize checks the file size, ensuring correct size.
      */
-    public Boolean checkFileSize(MultipartFile file, int maxSize)
-    {
+    public Boolean checkFileSize(MultipartFile file, int maxSize) {
         return file.getSize() < maxSize;
     }
 
@@ -48,10 +50,10 @@ public class FileValidation
         int lastDotIndex = fileName.lastIndexOf(".");
 
         // -1 means there was no period
-        if (lastDotIndex > 0 && lastDotIndex < fileName.length() - 1)
-        {
+        if (lastDotIndex > 0 && lastDotIndex < fileName.length() - 1) {
            return fileName.substring(lastDotIndex, fileName.length());
         }
+
         return "";
     }
 }

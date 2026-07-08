@@ -15,7 +15,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
 
@@ -46,12 +45,12 @@ public class FileController {
     @PostMapping(value = "/upload/profile/img", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> uploadProfileImage(@RequestPart("file")MultipartFile file,
                                                           @RequestPart("fileDetails") ImageMetaDataModel fileDetails,
-                                                          WebRequest request) throws SQLException, IOException {
+                                                          WebRequest request) throws IOException {
         fileService.uploadImageToS3(file, fileDetails);
-        ApiResponse fileData = new ApiResponse<>("Update", HttpStatus.CREATED.value(),
+        ApiResponse fileData = new ApiResponse<>("Update", HttpStatus.OK.value(),
                 "Changed profile image",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
-        return new ResponseEntity<>(fileData, HttpStatus.CREATED);
+        return new ResponseEntity<>(fileData, HttpStatus.OK);
     }
 }

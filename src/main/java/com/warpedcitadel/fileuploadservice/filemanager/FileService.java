@@ -14,7 +14,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 @Service
 public class FileService {
@@ -43,17 +42,20 @@ public class FileService {
 
         if (fileUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
 
-        uploadFileS3(file, "games/" + fileUUID);
+        String prefix = "users/" + fileDetails.getAppUserUuid() + "/games/" + fileDetails.getGameProfileUUID() + "/" + fileUUID;
+
+        uploadFileS3(file, prefix);
     }
 
 
-    public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws SQLException, IOException {
+    public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws IOException {
         String imageUUID = recordImageMetaData(file, imageDetails);
 
-        // If we got "", then it was an incorrect file type
         if (imageUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
 
-        uploadFileS3(file, "images/" + imageUUID);
+        String prefix = "users/" + imageDetails.getAppUserUUID() + "/images/" + imageUUID;
+
+        uploadFileS3(file, prefix);
     }
 
 
@@ -74,15 +76,12 @@ public class FileService {
     }
 
 
-    public String recordImageMetaData(MultipartFile file, ImageMetaDataModel imageDetails) throws SQLException
-    {
+    public String recordImageMetaData(MultipartFile file, ImageMetaDataModel imageDetails) {
         if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"}, 2000000)) return "";
-
-        long appUserid = repository.getUserByUuid(imageDetails.getAppUserUuid());
         String fileSize = formatBytes(file);
 
         ImageMetaDataModel imageMetaData = new ImageMetaDataModel(
-                appUserid,
+                imageDetails.getAppUserUUID(),
                 file.getOriginalFilename(),
                 fileSize
         );
@@ -91,16 +90,16 @@ public class FileService {
     }
 
 
-    private void uploadFileS3(MultipartFile file, String fileUUID) throws IOException {
+    private void uploadFileS3(MultipartFile file, String key) throws IOException {
         try {
             s3Client.putObject(PutObjectRequest.builder()
                             .bucket(bucketName)
-                            .key(fileUUID)
+                            .key(key)
                             .build(),
                     RequestBody.fromBytes(file.getBytes()));
 
             s3Client.utilities().getUrl(builder -> builder.bucket(bucketName)
-                    .key(fileUUID)).toExternalForm();
+                    .key(key)).toExternalForm();
         } catch (IOException failedUploadException) {
 
             throw new IOException("Failed to upload file", failedUploadException);

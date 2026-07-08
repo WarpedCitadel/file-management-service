@@ -103,7 +103,7 @@ public class GameManagerService {
     }
 
 
-    // ## Helper functions
+    // ## Helper functions ##
     private String getContentType(String filename) {
 
         return switch (filename.substring(filename.lastIndexOf('.') + 1)) {
