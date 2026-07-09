@@ -42,7 +42,7 @@ public class FileService {
 
         if (fileUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
 
-        String prefix = "users/" + fileDetails.getAppUserUuid() + "/games/" + fileDetails.getGameProfileUUID() + "/" + fileUUID;
+        String prefix = "games/" + fileDetails.getGameProfileUUID() + "/file" + fileUUID;
 
         uploadFileS3(file, prefix);
     }

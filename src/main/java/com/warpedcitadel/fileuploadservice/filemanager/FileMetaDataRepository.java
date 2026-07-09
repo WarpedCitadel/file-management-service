@@ -21,10 +21,10 @@ public class FileMetaDataRepository {
 
     public String recordFileMetaData(FileMetaDataModel file) {
 
-        String insertSQL = loadSQL.loadSQL("/filemetadata/insert--record-filemetadata.sql");
+        String insertSQL = loadSQL.loadSQL("/filedata/insert--record-filemetadata.sql");
 
         try (Connection connection = wcDatabase.getConnection();
-        PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {
+             PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {
 
             insertStatement.setString(1, file.getGameProfileUUID());
             insertStatement.setString(2, file.getFileName());
@@ -47,16 +47,16 @@ public class FileMetaDataRepository {
     }
 
     public String recordImageMetaData(ImageMetaDataModel file) {
-        String insertSQL = loadSQL.loadSQL("/filemetadata/update--app_user_profile_img_update.sql");
+        String insertSQL = loadSQL.loadSQL("/filedata/update--update_user_profile_img.sql");
 
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
 
-                 insertStatement.setString(1, file.getAppUserUUID());
-                 insertStatement.setString(2, file.getFileName());
-                 insertStatement.setString(3, file.getFileSize());
+            insertStatement.setString(1, file.getAppUserUUID());
+            insertStatement.setString(2, file.getFileName());
+            insertStatement.setString(3, file.getFileSize());
 
-                 ResultSet resultSet = insertStatement.executeQuery();
+            ResultSet resultSet = insertStatement.executeQuery();
 
             if (resultSet.next()) {
 
