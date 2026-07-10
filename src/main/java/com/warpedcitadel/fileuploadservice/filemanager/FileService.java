@@ -1,6 +1,8 @@
 package com.warpedcitadel.fileuploadservice.filemanager;
 
 
+import com.warpedcitadel.fileuploadservice.filemanager.dto.GameImageDetails;
+import com.warpedcitadel.fileuploadservice.filemanager.dto.GameImageDto;
 import com.warpedcitadel.fileuploadservice.filemanager.model.FileMetaDataModel;
 import com.warpedcitadel.fileuploadservice.filemanager.model.ImageMetaDataModel;
 import com.warpedcitadel.fileuploadservice.validation.FileValidation;
@@ -14,6 +16,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class FileService {
@@ -59,6 +63,35 @@ public class FileService {
     }
 
 
+    public void uploadGameImageToS3(List<MultipartFile> files, List<GameImageDetails> fileDetails) throws IOException {
+
+        if (files.size() != fileDetails.size()) {
+            throw new IllegalArgumentException(
+                    "Each file must have corresponding fileDetails.");
+        }
+
+        List<GameImageDto> imageMetaData = new ArrayList<>();
+
+        for (int i = 0; i < files.size(); i++) {
+
+            imageMetaData.add(new GameImageDto(files.get(i), fileDetails.get(i)));
+        }
+
+        for (int i = 0; i < imageMetaData.size(); i++) {
+
+            if (!fileValidation.isValidFile(imageMetaData.get(i).file(),
+                    new String[]{".jpeg", ".png", ".jpg"}, 2000000)) {
+
+                throw new IllegalArgumentException("Invalid File type: " + imageMetaData.get(i).file().getContentType());
+            }
+        }
+
+        List<String> fileUUIDList = recordGameImageMetaData(imageMetaData);
+
+        System.out.println(fileUUIDList);
+    }
+
+
     private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails) {
 
         if (!fileValidation.isValidFile(file, new String[]{".zip"}, 1000000000)) return "";
@@ -87,6 +120,27 @@ public class FileService {
         );
 
         return repository.recordImageMetaData(imageMetaData);
+    }
+
+
+    public List<String> recordGameImageMetaData(List<GameImageDto> gameImageList) {
+
+        List<ImageMetaDataModel> gameImageModelList = new ArrayList<>();
+
+        for (int i = 0; gameImageList.size() > i; i++) {
+
+            String fileSize = formatBytes(gameImageList.get(i).file());
+
+            ImageMetaDataModel imageMetaDataModel = new ImageMetaDataModel(
+                    gameImageList.get(i).details().gameProfileUUID(),
+                    gameImageList.get(i).file().getOriginalFilename(),
+                    fileSize
+            );
+
+            gameImageModelList.add(imageMetaDataModel);
+        }
+
+        return repository.recordGameImageMetaData(gameImageModelList);
     }
 
 
