@@ -59,7 +59,7 @@ public class GameManagerService {
     // Logic should only be applied to HTML5 based games
     public void extractZip(RequestData requestData) {
 
-        String prefix = "games/" + requestData.gameProfileUUID() + "/file" + requestData.fileUUID();
+        String prefix = "games/" + requestData.gameProfileUUID() + "/file/" + requestData.fileUUID();
 
         ResponseInputStream<GetObjectResponse> object = s3Client.getObject(
                 GetObjectRequest
@@ -126,7 +126,7 @@ public class GameManagerService {
 
     private String findFilesByExtension(RequestData requestData) {
 
-        String filePath = "games/" + requestData.gameProfileUUID() + "/file" + requestData.fileUUID();
+        String filePath = "games/" + requestData.gameProfileUUID() + "/file/" + requestData.fileUUID();
         String prefix = filePath.endsWith("/") ? filePath : filePath + "/";
 
         List<String> fileKeys = new ArrayList<>();

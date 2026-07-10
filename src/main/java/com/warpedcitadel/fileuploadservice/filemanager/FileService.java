@@ -46,7 +46,7 @@ public class FileService {
 
         if (fileUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
 
-        String prefix = "games/" + fileDetails.getGameProfileUUID() + "/file" + fileUUID;
+        String prefix = "games/" + fileDetails.getGameProfileUUID() + "/files/" + fileUUID;
 
         uploadFileS3(file, prefix);
     }
@@ -88,7 +88,13 @@ public class FileService {
 
         List<String> fileUUIDList = recordGameImageMetaData(imageMetaData);
 
-        System.out.println(fileUUIDList);
+        for (int i = 0; files.size() > i; i++) {
+
+            String prefix = "games/" + fileDetails.get(i).gameProfileUUID() + "/images/" + fileUUIDList.get(i);
+
+            uploadFileS3(files.get(i), prefix);
+        }
+
     }
 
 
