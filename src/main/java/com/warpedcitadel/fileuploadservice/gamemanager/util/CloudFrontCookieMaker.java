@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 
+// TODO: Move to content-management-service
 @Service
 public class CloudFrontCookieMaker {
 

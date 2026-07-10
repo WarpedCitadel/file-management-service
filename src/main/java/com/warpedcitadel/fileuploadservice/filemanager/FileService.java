@@ -90,7 +90,7 @@ public class FileService {
 
         for (int i = 0; files.size() > i; i++) {
 
-            String prefix = "games/" + fileDetails.get(i).gameProfileUUID() + "/images/" + fileUUIDList.get(i);
+            String prefix = "images/games/" + fileDetails.get(i).gameProfileUUID() + "/gameImages/" + fileUUIDList.get(i);
 
             uploadFileS3(files.get(i), prefix);
         }

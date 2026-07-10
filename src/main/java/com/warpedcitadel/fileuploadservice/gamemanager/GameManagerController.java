@@ -15,13 +15,15 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 
 @RestController
-@RequestMapping(path = "/api/games", version = "1.0")
+@RequestMapping(path = "/api/transfer", version = "1.0")
 public class GameManagerController {
 
     private final GameManagerService gameManagerService;
     private final CloudFrontCookieMaker cloudFrontCookieMaker;
+
 
     public GameManagerController(GameManagerService gameManagerService,
                                  CloudFrontCookieMaker cloudFrontCookieMaker) {
@@ -31,6 +33,7 @@ public class GameManagerController {
     }
 
 
+    // TODO: Move to content-management-service
     @GetMapping("/getGame")
     public ResponseEntity<ApiResponse<ResponseData>> requestGameUrl(@RequestBody RequestData requestData,
                                                                     WebRequest request,
@@ -59,8 +62,8 @@ public class GameManagerController {
     }
 
 
-    @PostMapping("/uploadGame")
-    public ResponseEntity<ApiResponse<String>> uploadGameToS3(@RequestBody RequestData requestData, WebRequest request) {
+    @PostMapping("/transferHtml5Game")
+    public ResponseEntity<ApiResponse<String>> transferGameFileToS3(@RequestBody RequestData requestData, WebRequest request) {
 
 
         gameManagerService.extractZip(requestData);
@@ -71,7 +74,23 @@ public class GameManagerController {
         return new ResponseEntity<>(fileData, HttpStatus.OK);
     }
 
+
+    @PostMapping("/transferGameImage")
+    public ResponseEntity<ApiResponse<String>> transferGameImageToS3(@RequestBody List<RequestData> requestData, WebRequest request) {
+
+
+        gameManagerService.transferGameImagesToS3(requestData);
+        ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.OK.value(),
+                "Transferred to S3",
+                request.getDescription(false).replace("uri=", ""),
+                Instant.now(Clock.systemUTC()));
+        return new ResponseEntity<>(fileData, HttpStatus.OK);
+    }
+
+
     // ### HELPER Function ###
+
+    // TODO: Move to content-management-service
     private void addCookie(
             HttpServletResponse response,
             String name,

@@ -29,6 +29,9 @@ public class GameManagerService {
     @Value("${aws.game-bucket.name}")
     private String gameBucketName;
 
+    @Value("${aws.image-bucket.name}")
+    private String imageBucketName;
+
     private final S3Client s3Client;
 
     public GameManagerService(S3Client s3Client) {
@@ -36,6 +39,7 @@ public class GameManagerService {
     }
 
 
+    // TODO: Move to content-management-service
     public ResponseData generateHtmlGameUrl(RequestData requestData) {
 
         try {
@@ -59,7 +63,7 @@ public class GameManagerService {
     // Logic should only be applied to HTML5 based games
     public void extractZip(RequestData requestData) {
 
-        String prefix = "games/" + requestData.gameProfileUUID() + "/file/" + requestData.fileUUID();
+        String prefix = "games/" + requestData.gameProfileUUID() + "/files/" + requestData.fileUUID();
 
         ResponseInputStream<GetObjectResponse> object = s3Client.getObject(
                 GetObjectRequest
@@ -106,6 +110,38 @@ public class GameManagerService {
     }
 
 
+    public void transferGameImagesToS3(List<RequestData> imageData){
+
+        for (int i = 0; imageData.size() > i; i++) {
+
+            try {
+                String prefix = "images/games/" + imageData.get(i).gameProfileUUID() + "/gameImages/" + imageData.get(i).fileUUID();
+
+                CopyObjectRequest copyRequest = CopyObjectRequest.builder()
+                        .sourceBucket(validBucketName)
+                        .sourceKey(prefix)
+                        .destinationBucket(imageBucketName)
+                        .destinationKey(prefix)
+                        .build();
+
+                s3Client.copyObject(copyRequest);
+                System.out.println("File successfully copied to destination bucket.");
+
+                DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                        .bucket(validBucketName)
+                        .key(prefix)
+                        .build();
+
+                s3Client.deleteObject(deleteRequest);
+                System.out.println("Original file deleted from source bucket.");
+            } catch (RuntimeException exception) {
+
+                System.out.println("Failed to transfer image object: " + imageData.get(i).fileUUID() + " to destination bucket : " + exception.getMessage());
+            }
+        }
+    }
+
+
     // ## Helper functions ##
     private String getContentType(String filename) {
 
@@ -124,6 +160,7 @@ public class GameManagerService {
     }
 
 
+    // TODO: Move to content-management-service
     private String findFilesByExtension(RequestData requestData) {
 
         String filePath = "games/" + requestData.gameProfileUUID() + "/file/" + requestData.fileUUID();
