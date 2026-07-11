@@ -1,18 +1,15 @@
 package com.warpedcitadel.fileuploadservice.gamemanager;
 
 import com.warpedcitadel.fileuploadservice.gamemanager.dto.RequestData;
-import com.warpedcitadel.fileuploadservice.gamemanager.dto.ResponseData;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
-import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -38,32 +35,10 @@ public class GameManagerService {
         this.s3Client = s3Client;
     }
 
-
-    // TODO: Move to content-management-service
-    public ResponseData generateHtmlGameUrl(RequestData requestData) {
-
-        try {
-
-            String result = findFilesByExtension(requestData);
-            String gameUrl = "https://www.warpedcitadel.com/" + result;
-            ResponseData response = new ResponseData(
-                    gameUrl
-            );
-
-            return response;
-
-        } catch (Exception exception) {
-
-            throw new RuntimeException("Failed to generate url for object key of " +
-                    requestData.fileUUID(), exception);
-        }
-    }
-
-
     // Logic should only be applied to HTML5 based games
     public void extractZip(RequestData requestData) {
 
-        String prefix = "games/" + requestData.gameProfileUUID() + "/files/" + requestData.fileUUID();
+        String prefix = "games/" + requestData.gameProfileUUID() + "/files/" + requestData.fileName();
 
         ResponseInputStream<GetObjectResponse> object = s3Client.getObject(
                 GetObjectRequest
@@ -104,7 +79,7 @@ public class GameManagerService {
         } catch (IOException exception) {
 
             throw new RuntimeException("Failed to unzip file contents of "
-                    + requestData.fileUUID()
+                    + requestData.fileName()
                     + " to storage", exception);
         }
     }
@@ -115,7 +90,7 @@ public class GameManagerService {
         for (int i = 0; imageData.size() > i; i++) {
 
             try {
-                String prefix = "images/games/" + imageData.get(i).gameProfileUUID() + "/gameImages/" + imageData.get(i).fileUUID();
+                String prefix = "images/games/" + imageData.get(i).gameProfileUUID() + "/gameImages/" + imageData.get(i).fileName();
 
                 CopyObjectRequest copyRequest = CopyObjectRequest.builder()
                         .sourceBucket(validBucketName)
@@ -136,7 +111,7 @@ public class GameManagerService {
                 System.out.println("Original file deleted from source bucket.");
             } catch (RuntimeException exception) {
 
-                System.out.println("Failed to transfer image object: " + imageData.get(i).fileUUID() + " to destination bucket : " + exception.getMessage());
+                System.out.println("Failed to transfer image object: " + imageData.get(i).fileName() + " to destination bucket : " + exception.getMessage());
             }
         }
     }
@@ -157,38 +132,5 @@ public class GameManagerService {
             case "wasm" -> "application/wasm";
             default -> "application/octet-stream";
         };
-    }
-
-
-    // TODO: Move to content-management-service
-    private String findFilesByExtension(RequestData requestData) {
-
-        String filePath = "games/" + requestData.gameProfileUUID() + "/file/" + requestData.fileUUID();
-        String prefix = filePath.endsWith("/") ? filePath : filePath + "/";
-
-        List<String> fileKeys = new ArrayList<>();
-
-        try {
-
-            ListObjectsV2Request request = ListObjectsV2Request.builder()
-                    .bucket(gameBucketName)
-                    .prefix(prefix)
-                    .build();
-
-            ListObjectsV2Iterable responses = s3Client.listObjectsV2Paginator(request);
-
-            responses.contents().stream()
-                    .map(s3Object -> s3Object.key())
-                    .filter(key -> key.toLowerCase().endsWith(".html"))
-                    .forEach(htmlKey -> {
-                        fileKeys.add(htmlKey);
-                    });
-
-            return fileKeys.getFirst();
-
-        } catch (Exception exception) {
-
-            throw new RuntimeException("Failed to retrieve game .html file");
-        }
     }
 }

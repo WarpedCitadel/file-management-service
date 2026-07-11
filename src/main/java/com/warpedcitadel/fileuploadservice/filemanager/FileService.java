@@ -86,11 +86,11 @@ public class FileService {
             }
         }
 
-        List<String> fileUUIDList = recordGameImageMetaData(imageMetaData);
+        recordGameImageMetaData(imageMetaData);
 
         for (int i = 0; files.size() > i; i++) {
 
-            String prefix = "images/games/" + fileDetails.get(i).gameProfileUUID() + "/gameImages/" + fileUUIDList.get(i);
+            String prefix = "images/games/" + fileDetails.get(i).gameProfileUUID() + "/gameImages/" + files.get(i).getOriginalFilename();
 
             uploadFileS3(files.get(i), prefix);
         }
@@ -140,7 +140,8 @@ public class FileService {
             ImageMetaDataModel imageMetaDataModel = new ImageMetaDataModel(
                     gameImageList.get(i).details().gameProfileUUID(),
                     gameImageList.get(i).file().getOriginalFilename(),
-                    fileSize
+                    fileSize,
+                    gameImageList.get(i).details().isCover()
             );
 
             gameImageModelList.add(imageMetaDataModel);

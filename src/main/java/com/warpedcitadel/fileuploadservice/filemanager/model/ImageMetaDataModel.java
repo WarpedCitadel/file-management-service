@@ -6,20 +6,24 @@ public class ImageMetaDataModel {
     private String appUserUUID;
     private String fileName;
     private String fileSize;
+    private boolean isCover;
 
 
     public ImageMetaDataModel() {
 
     }
 
-    public ImageMetaDataModel(String fileUUID) {
-        this.fileUUID= fileUUID;
-    }
-
     public ImageMetaDataModel(String appUserUUID, String fileName, String fileSize) {
         this.appUserUUID = appUserUUID;
         this.fileName = fileName;
         this.fileSize = fileSize;
+    }
+
+    public ImageMetaDataModel(String appUserUUID, String fileName, String fileSize, boolean isCover) {
+        this.appUserUUID = appUserUUID;
+        this.fileName = fileName;
+        this.fileSize = fileSize;
+        this.isCover = isCover;
     }
 
 
@@ -39,6 +43,10 @@ public class ImageMetaDataModel {
         return fileSize;
     }
 
+    public boolean getIsCover() {
+        return isCover;
+    }
+
 
     @Override
     public String toString() {
@@ -47,6 +55,7 @@ public class ImageMetaDataModel {
                 ", appUserUUID='" + appUserUUID + '\'' +
                 ", fileName='" + fileName + '\'' +
                 ", fileSize='" + fileSize + '\'' +
+                ", isCover=" + isCover +
                 '}';
     }
 }

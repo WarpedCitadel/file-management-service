@@ -78,28 +78,31 @@ public class FileMetaDataRepository {
     public List<String> recordGameImageMetaData (List<ImageMetaDataModel> files) {
 
         String insertSQL = loadSQL.loadSQL("/filedata/insert--record_game_image_file.sql");
-        List<String> gameImageUUIDList = new ArrayList<>();
+        List<String> gameImageList = new ArrayList<>();
 
         try (Connection connection = wcDatabase.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(insertSQL)) {
+             PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {
 
             String[] fileNames = new String[files.size()];
             String[] fileSizes = new String[files.size()];
+            Object[] isCover = new Object[files.size()];
 
             for (int i = 0; i < files.size(); i++) {
                 ImageMetaDataModel file = files.get(i);
                 fileNames[i] = file.getFileName();
                 fileSizes[i] = file.getFileSize();
+                isCover[i] = file.getIsCover();
             }
 
-            stmt.setString(1, files.getFirst().getAppUserUUID()); // All Game profile UUIDS are the same
-            stmt.setArray(2, connection.createArrayOf("text", fileNames));
-            stmt.setArray(3, connection.createArrayOf("text", fileSizes));
+            insertStatement.setString(1, files.getFirst().getAppUserUUID());
+            insertStatement.setArray(2, connection.createArrayOf("text", fileNames));
+            insertStatement.setArray(3, connection.createArrayOf("text", fileSizes));
+            insertStatement.setArray(4, connection.createArrayOf("bool", isCover));
 
-            try (ResultSet rs = stmt.executeQuery()) {
+            try (ResultSet rs = insertStatement.executeQuery()) {
                 while (rs.next()) {
 
-                    gameImageUUIDList.add(rs.getString("img_uuid"));
+                    gameImageList.add(rs.getString("file_name"));
                 }
             }
 
@@ -108,6 +111,6 @@ public class FileMetaDataRepository {
             throw new RuntimeException("Could not record image metadata", exception);
         }
 
-        return gameImageUUIDList;
+        return gameImageList;
     }
 }

@@ -52,7 +52,7 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         errors.put("Message", MUSEException.getMessage());
         return new ApiErrorResponse(
-                "File too Large",
+                "File content too large",
                 HttpStatus.CONTENT_TOO_LARGE.value(),
                 errors,
                 request.getDescription(false).replace("uri=", ""),

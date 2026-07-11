@@ -1,5 +1,6 @@
 package com.warpedcitadel.fileuploadservice.filemanager.dto;
 
 public record GameImageDetails(
-        String gameProfileUUID
+        String gameProfileUUID,
+        boolean isCover
 ) {}
