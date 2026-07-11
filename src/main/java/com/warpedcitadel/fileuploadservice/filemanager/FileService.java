@@ -6,7 +6,6 @@ import com.warpedcitadel.fileuploadservice.filemanager.dto.GameImageDto;
 import com.warpedcitadel.fileuploadservice.filemanager.model.FileMetaDataModel;
 import com.warpedcitadel.fileuploadservice.filemanager.model.ImageMetaDataModel;
 import com.warpedcitadel.fileuploadservice.validation.FileValidation;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -40,24 +39,20 @@ public class FileService {
         this.s3Client = s3Client;
     }
 
-
+    // TODO: provide proper formatting and receive name from DB instead
     public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails) throws IOException {
-        String fileUUID = recordFileMetaData(file, fileDetails);
+        recordFileMetaData(file, fileDetails);
 
-        if (fileUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
-
-        String prefix = "games/" + fileDetails.getGameProfileUUID() + "/files/" + fileUUID;
+        String prefix = "games/" + fileDetails.getGameProfileUUID() + "/files/" + file.getOriginalFilename();
 
         uploadFileS3(file, prefix);
     }
 
 
     public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws IOException {
-        String imageUUID = recordImageMetaData(file, imageDetails);
+        recordImageMetaData(file, imageDetails);
 
-        if (imageUUID.isEmpty()) throw new BadRequestException("Incorrect File Type.");
-
-        String prefix = "users/" + imageDetails.getAppUserUUID() + "/images/" + imageUUID;
+        String prefix = "users/" + imageDetails.getAppUserUUID() + "/images/" + file.getOriginalFilename();
 
         uploadFileS3(file, prefix);
     }

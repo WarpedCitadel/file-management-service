@@ -25,12 +25,25 @@ public class GameManagerController {
     }
 
     @PostMapping("/transferHtml5Game")
-    public ResponseEntity<ApiResponse<String>> transferGameFileToS3(@RequestBody RequestData requestData, WebRequest request) {
+    public ResponseEntity<ApiResponse<String>> unzipFileToS3(@RequestBody RequestData requestData, WebRequest request) {
 
 
         gameManagerService.extractZip(requestData);
-        ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.OK.value(),
-                "Uploaded to S3",
+        ApiResponse<String> fileData = new ApiResponse<>("Transfer", HttpStatus.OK.value(),
+                "Transferred to S3",
+                request.getDescription(false).replace("uri=", ""),
+                Instant.now(Clock.systemUTC()));
+        return new ResponseEntity<>(fileData, HttpStatus.OK);
+    }
+
+
+    @PostMapping("/transferGameFile")
+    public ResponseEntity<ApiResponse<String>> transferGameFileToS3(@RequestBody List<RequestData> requestData, WebRequest request) {
+
+
+        gameManagerService.transferGameFileToS3(requestData);
+        ApiResponse<String> fileData = new ApiResponse<>("Transfer", HttpStatus.OK.value(),
+                "Transferred to S3",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.OK);
@@ -42,7 +55,7 @@ public class GameManagerController {
 
 
         gameManagerService.transferGameImagesToS3(requestData);
-        ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.OK.value(),
+        ApiResponse<String> fileData = new ApiResponse<>("Transfer", HttpStatus.OK.value(),
                 "Transferred to S3",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));

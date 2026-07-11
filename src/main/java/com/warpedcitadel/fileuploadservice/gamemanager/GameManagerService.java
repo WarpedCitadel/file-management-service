@@ -84,6 +84,36 @@ public class GameManagerService {
         }
     }
 
+    public void transferGameFileToS3(List<RequestData> fileData){
+
+        for (int i = 0; fileData.size() > i; i++) {
+
+            try {
+                String prefix = "games/" + fileData.get(i).gameProfileUUID() + "/files/" + fileData.get(i).fileName();
+
+                CopyObjectRequest copyRequest = CopyObjectRequest.builder()
+                        .sourceBucket(validBucketName)
+                        .sourceKey(prefix)
+                        .destinationBucket(gameBucketName)
+                        .destinationKey(prefix)
+                        .build();
+
+                s3Client.copyObject(copyRequest);
+                DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                        .bucket(validBucketName)
+                        .key(prefix)
+                        .build();
+
+                s3Client.deleteObject(deleteRequest);
+
+            } catch (RuntimeException exception) {
+
+                throw new RuntimeException("Failed to transfer file contents of "
+                        + fileData.get(i).fileName()
+                        + " to storage", exception);
+            }
+        }
+    }
 
     public void transferGameImagesToS3(List<RequestData> imageData){
 
@@ -100,18 +130,18 @@ public class GameManagerService {
                         .build();
 
                 s3Client.copyObject(copyRequest);
-                System.out.println("File successfully copied to destination bucket.");
-
                 DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
                         .bucket(validBucketName)
                         .key(prefix)
                         .build();
 
                 s3Client.deleteObject(deleteRequest);
-                System.out.println("Original file deleted from source bucket.");
+
             } catch (RuntimeException exception) {
 
-                System.out.println("Failed to transfer image object: " + imageData.get(i).fileName() + " to destination bucket : " + exception.getMessage());
+                throw new RuntimeException("Failed to transfer file contents of "
+                        + imageData.get(i).fileName()
+                        + " to storage", exception);
             }
         }
     }
