@@ -13,7 +13,7 @@
 	<artifactId>file-management-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>filemanagementservice</name>
-	<description>File upload and validation service for Warped Citadel</description>
+	<description>File management service for Warped Citadel</description>
 	<url/>
 	<licenses>
 		<license/>
