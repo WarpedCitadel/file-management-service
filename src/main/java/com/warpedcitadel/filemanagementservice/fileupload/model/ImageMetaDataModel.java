@@ -47,6 +47,13 @@ public class ImageMetaDataModel {
         return isCover;
     }
 
+    public void setFileUUID(String fileUUID) {
+        this.fileUUID = fileUUID;
+    }
+
+    public void setFileName(String fileName){
+        this.fileName = fileName;
+    }
 
     @Override
     public String toString() {

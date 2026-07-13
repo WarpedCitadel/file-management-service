@@ -48,7 +48,7 @@ public class FileUploadRepository {
         }
     }
 
-    public String recordImageMetaData(ImageMetaDataModel file) {
+    public ImageMetaDataModel recordImageMetaData(ImageMetaDataModel file) {
         String insertSQL = loadSQL.loadSQL("/filedata/update--update_user_profile_img.sql");
 
         try (Connection connection = wcDatabase.getConnection();
@@ -62,9 +62,10 @@ public class FileUploadRepository {
 
             if (resultSet.next()) {
 
-                String fileName = resultSet.getString(1);
+                 file.setFileName(resultSet.getString("file_name"));
+                 file.setFileUUID(resultSet.getString("img_uuid"));
 
-                return fileName;
+                return file;
             } else {
 
                 throw new RuntimeException("Failed to insert file metadata to the database");

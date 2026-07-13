@@ -50,9 +50,9 @@ public class FileUploadService {
 
 
     public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws IOException {
-        String fileName = recordImageMetaData(file, imageDetails);
+        ImageMetaDataModel image = recordImageMetaData(file, imageDetails);
 
-        String prefix = "images/users/" + imageDetails.getAppUserUUID() + "/image/" + fileName;
+        String prefix = "images/users/" + image.getFileUUID() + "/image/" + image.getFileName();
 
         uploadFileS3(file, prefix);
     }
@@ -110,8 +110,11 @@ public class FileUploadService {
     }
 
 
-    public String recordImageMetaData(MultipartFile file, ImageMetaDataModel imageDetails) {
-        if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"}, 2000000)) return "";
+    public ImageMetaDataModel recordImageMetaData(MultipartFile file, ImageMetaDataModel imageDetails) {
+        if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"}, 2000000)) {
+
+            throw new IllegalArgumentException("Wrong file format: " + file.getOriginalFilename());
+        };
         String fileSize = formatBytes(file);
 
         ImageMetaDataModel imageMetaData = new ImageMetaDataModel(

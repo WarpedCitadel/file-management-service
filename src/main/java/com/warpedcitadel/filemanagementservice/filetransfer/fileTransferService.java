@@ -38,7 +38,7 @@ public class fileTransferService {
     // Logic should only be applied to HTML5 based games
     public void extractZip(RequestData requestData) {
 
-        String prefix = "games/" + requestData.gameProfileUUID() + "/files/" + requestData.fileName();
+        String prefix = "games/" + requestData.objectUUID() + "/files/" + requestData.fileName();
 
         ResponseInputStream<GetObjectResponse> object = s3Client.getObject(
                 GetObjectRequest
@@ -89,7 +89,7 @@ public class fileTransferService {
         for (int i = 0; fileData.size() > i; i++) {
 
             try {
-                String prefix = "games/" + fileData.get(i).gameProfileUUID() + "/files/" + fileData.get(i).fileName();
+                String prefix = "games/" + fileData.get(i).objectUUID() + "/files/" + fileData.get(i).fileName();
 
                 CopyObjectRequest copyRequest = CopyObjectRequest.builder()
                         .sourceBucket(validBucketName)
@@ -120,7 +120,7 @@ public class fileTransferService {
         for (int i = 0; imageData.size() > i; i++) {
 
             try {
-                String prefix = "images/games/" + imageData.get(i).gameProfileUUID() + "/gameImages/" + imageData.get(i).fileName();
+                String prefix = "images/games/" + imageData.get(i).objectUUID() + "/gameImages/" + imageData.get(i).fileName();
 
                 CopyObjectRequest copyRequest = CopyObjectRequest.builder()
                         .sourceBucket(validBucketName)
@@ -150,7 +150,7 @@ public class fileTransferService {
     public void transferProfileImageToS3(RequestData imageData){
 
             try {
-                String prefix = "images/users/" + imageData.gameProfileUUID() + "/image/" + imageData.fileName();
+                String prefix = "images/users/" + imageData.objectUUID() + "/image/" + imageData.fileName();
 
                 CopyObjectRequest copyRequest = CopyObjectRequest.builder()
                         .sourceBucket(validBucketName)
