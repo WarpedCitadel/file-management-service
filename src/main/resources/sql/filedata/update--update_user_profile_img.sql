@@ -15,7 +15,7 @@ upt_profile_image_cte AS
 		INNER JOIN wc01.app_user_profile aup
 	ON aup.app_user_id = sauc.id
 	WHERE pi.app_user_profile_id = aup.id
-	returning img_uuid
+	returning file_name
 )
-SELECT img_uuid
+SELECT file_name
 FROM upt_profile_image_cte;

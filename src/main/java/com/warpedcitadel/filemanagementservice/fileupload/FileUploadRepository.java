@@ -62,8 +62,9 @@ public class FileUploadRepository {
 
             if (resultSet.next()) {
 
-                String fileUUID = resultSet.getString(1);
-                return fileUUID;
+                String fileName = resultSet.getString(1);
+
+                return fileName;
             } else {
 
                 throw new RuntimeException("Failed to insert file metadata to the database");

@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class FileUploadService {
@@ -39,7 +40,6 @@ public class FileUploadService {
         this.s3Client = s3Client;
     }
 
-    // TODO: provide proper formatting and receive name from DB instead
     public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails) throws IOException {
         recordFileMetaData(file, fileDetails);
 
@@ -50,9 +50,9 @@ public class FileUploadService {
 
 
     public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws IOException {
-        recordImageMetaData(file, imageDetails);
+        String fileName = recordImageMetaData(file, imageDetails);
 
-        String prefix = "images/users/" + imageDetails.getAppUserUUID() + "/image/" + file.getOriginalFilename();
+        String prefix = "images/users/" + imageDetails.getAppUserUUID() + "/image/" + fileName;
 
         uploadFileS3(file, prefix);
     }
@@ -81,11 +81,11 @@ public class FileUploadService {
             }
         }
 
-        recordGameImageMetaData(imageMetaData);
+        List<String> fileNames = recordGameImageMetaData(imageMetaData);
 
         for (int i = 0; files.size() > i; i++) {
 
-            String prefix = "images/games/" + fileDetails.get(i).gameProfileUUID() + "/gameImages/" + files.get(i).getOriginalFilename();
+            String prefix = "images/games/" + fileDetails.get(i).gameProfileUUID() + "/gameImages/" + fileNames.get(i);
 
             uploadFileS3(files.get(i), prefix);
         }
@@ -116,7 +116,7 @@ public class FileUploadService {
 
         ImageMetaDataModel imageMetaData = new ImageMetaDataModel(
                 imageDetails.getAppUserUUID(),
-                file.getOriginalFilename(),
+                updateFileName(file.getOriginalFilename()),
                 fileSize
         );
 
@@ -134,7 +134,7 @@ public class FileUploadService {
 
             ImageMetaDataModel imageMetaDataModel = new ImageMetaDataModel(
                     gameImageList.get(i).details().gameProfileUUID(),
-                    gameImageList.get(i).file().getOriginalFilename(),
+                    updateFileName(gameImageList.get(i).file().getOriginalFilename()),
                     fileSize,
                     gameImageList.get(i).details().isCover()
             );
@@ -178,4 +178,20 @@ public class FileUploadService {
             return sizeInBytes + "MB";
         }
     }
+
+
+    // TODO: update logic later and possibly use data from DB
+    private String updateFileName(String rawFileName){
+
+        int lastDotIndex = rawFileName.lastIndexOf(".");
+
+        if (lastDotIndex > 0 && lastDotIndex < rawFileName.length() - 1) {
+
+            String newFilename = UUID.randomUUID().toString();
+            return newFilename + rawFileName.substring(lastDotIndex);
+        }
+
+        return rawFileName;
+    }
 }
+
