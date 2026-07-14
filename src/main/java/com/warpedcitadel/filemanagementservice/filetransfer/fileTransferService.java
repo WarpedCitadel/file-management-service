@@ -66,6 +66,7 @@ public class fileTransferService {
                                     .bucket(gameBucketName)
                                     .key(prefix + "/" + entry.getName())
                                     .contentType(getContentType(entry.getName()))
+                                    .contentEncoding(determineContentEncoding(entry.getName()))
                                     .build();
 
                     s3Client.putObject(
@@ -177,9 +178,13 @@ public class fileTransferService {
 
 
     // ## Helper functions ##
-    private String getContentType(String filename) {
+    private String getContentType(String fileName) {
 
-        return switch (filename.substring(filename.lastIndexOf('.') + 1)) {
+        if (fileName.endsWith(".gz") || fileName.endsWith(".br")) {
+            fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+        }
+
+        return switch (fileName.substring(fileName.lastIndexOf('.') + 1)) {
             case "html" -> "text/html";
             case "js" -> "application/javascript";
             case "css" -> "text/css";
@@ -191,5 +196,14 @@ public class fileTransferService {
             case "wasm" -> "application/wasm";
             default -> "application/octet-stream";
         };
+    }
+
+    private String determineContentEncoding(String fileName) {
+        String lowerName = fileName.toLowerCase();
+
+        if (lowerName.endsWith(".gz") || lowerName.contains("-gzip")) return "gzip";
+        if (lowerName.endsWith(".br") || lowerName.contains("-brotli")) return "br";
+
+        return null;
     }
 }
