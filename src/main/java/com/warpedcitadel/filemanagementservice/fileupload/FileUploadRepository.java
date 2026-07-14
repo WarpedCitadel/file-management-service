@@ -23,7 +23,7 @@ public class FileUploadRepository {
 
     public String recordFileMetaData(FileMetaDataModel file) {
 
-        String insertSQL = loadSQL.loadSQL("/filedata/insert--record-filemetadata.sql");
+        String insertSQL = loadSQL.loadSQL("/filedata/insert--record_filemetadata.sql");
 
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {

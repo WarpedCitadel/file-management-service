@@ -66,7 +66,7 @@ public class fileTransferService {
                                     .bucket(gameBucketName)
                                     .key(prefix + "/" + entry.getName())
                                     .contentType(getContentType(entry.getName()))
-                                    .contentEncoding(determineContentEncoding(entry.getName()))
+                                    .contentEncoding(getContentEncoding(entry.getName()))
                                     .build();
 
                     s3Client.putObject(
@@ -198,7 +198,7 @@ public class fileTransferService {
         };
     }
 
-    private String determineContentEncoding(String fileName) {
+    private String getContentEncoding(String fileName) {
         String lowerName = fileName.toLowerCase();
 
         if (lowerName.endsWith(".gz") || lowerName.contains("-gzip")) return "gzip";
