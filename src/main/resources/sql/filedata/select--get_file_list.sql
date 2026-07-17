@@ -9,7 +9,7 @@ sel_game_file_cte AS (
 		gf.file_name,
 		gf.file_version,
 		gf.file_size,
-		gf.isbrowser,
+		gf.platform_id,
 		gf.status_type_id,
 		gf.modified_dtm,
 		gf.created_dtm
@@ -21,7 +21,7 @@ SELECT
 		sgp.file_name,
 		sgp.file_version,
 		sgp.file_size,
-		sgp.isbrowser,
+		sgp.platform_id,
 		sgp.status_type_id,
 		sgp.modified_dtm,
 		sgp.created_dtm

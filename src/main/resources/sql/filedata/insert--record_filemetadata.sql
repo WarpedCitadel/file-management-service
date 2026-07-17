@@ -11,9 +11,11 @@ ins_game_file_cte AS
 	(game_profile_id,
 	 file_name,
  	 file_version,
+ 	 platform_id,
  	 file_size)
     SELECT
         id,
+        ?,
         ?,
         ?,
         ?

@@ -5,7 +5,7 @@ public class FileDataModel {
     String fileName;
     String fileVersion;
     String fileSize;
-    boolean isBrowser;
+    int platformOS;
     int fileStatus;
     String modifiedDtm;
     String createdDtm;
@@ -14,11 +14,11 @@ public class FileDataModel {
 
     }
 
-    public FileDataModel(String fileName, String fileVersion, String fileSize, boolean isBrowser, int fileStatus, String modifiedDtm, String createdDtm) {
+    public FileDataModel(String fileName, String fileVersion, String fileSize, int platformOS, int fileStatus, String modifiedDtm, String createdDtm) {
         this.fileName = fileName;
         this.fileVersion = fileVersion;
         this.fileSize = fileSize;
-        this.isBrowser = isBrowser;
+        this.platformOS = platformOS;
         this.fileStatus = fileStatus;
         this.modifiedDtm = modifiedDtm;
         this.createdDtm = createdDtm;
@@ -37,8 +37,8 @@ public class FileDataModel {
         return fileSize;
     }
 
-    public boolean getIsBrowser() {
-        return isBrowser;
+    public int getPlatformOS() {
+        return platformOS;
     }
 
     public int getFileStatus() {
@@ -66,8 +66,8 @@ public class FileDataModel {
         this.fileSize = fileSize;
     }
 
-    public void setIsBrowser(boolean isBrowser) {
-        this.isBrowser = isBrowser;
+    public void setPlatformOS(int platformOS) {
+        this.platformOS = platformOS;
     }
 
     public void setFileStatus(int fileStatus) {
@@ -89,7 +89,7 @@ public class FileDataModel {
                 "fileName='" + fileName + '\'' +
                 ", fileVersion='" + fileVersion + '\'' +
                 ", fileSize='" + fileSize + '\'' +
-                ", isBrowser='" + isBrowser + '\'' +
+                ", platformOS='" + platformOS + '\'' +
                 ", fileStatus=" + fileStatus +
                 ", modifiedDtm='" + modifiedDtm + '\'' +
                 ", createdDtm='" + createdDtm + '\'' +

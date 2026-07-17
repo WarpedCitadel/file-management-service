@@ -1,6 +1,7 @@
 package com.warpedcitadel.filemanagementservice.fileupload;
 
 
+import com.warpedcitadel.filemanagementservice.fileupload.dto.FileUploadDto;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDetails;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDto;
 import com.warpedcitadel.filemanagementservice.fileupload.model.FileMetaDataModel;
@@ -40,10 +41,10 @@ public class FileUploadService {
         this.s3Client = s3Client;
     }
 
-    public void uploadFileToS3(MultipartFile file, FileMetaDataModel fileDetails) throws IOException {
-        recordFileMetaData(file, fileDetails);
+    public void uploadFileToS3(MultipartFile file, FileUploadDto fileUploadDto) throws IOException {
+        recordFileMetaData(file, fileUploadDto);
 
-        String prefix = "games/" + fileDetails.getGameProfileUUID() + "/files/" + file.getOriginalFilename();
+        String prefix = "games/" + fileUploadDto.gameProfileUUID() + "/files/" + file.getOriginalFilename();
 
         uploadFileS3(file, prefix);
     }
@@ -93,16 +94,17 @@ public class FileUploadService {
     }
 
 
-    private String recordFileMetaData(MultipartFile file, FileMetaDataModel fileDetails) {
+    private String recordFileMetaData(MultipartFile file, FileUploadDto fileUploadDto) {
 
         if (!fileValidation.isValidFile(file, new String[]{".zip"}, 1000000000)) return "";
 
         String fileSize = formatBytes(file);
 
         FileMetaDataModel metaData = new FileMetaDataModel(
-                fileDetails.getGameProfileUUID(),
+                fileUploadDto.gameProfileUUID(),
                 file.getOriginalFilename(),
-                fileDetails.getFileVersion(),
+                fileUploadDto.fileVersion(),
+                fileUploadDto.platformOS(),
                 fileSize
         );
 

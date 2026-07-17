@@ -43,7 +43,7 @@ public class FileManagementRepository {
                 file.setFileName(resultSet.getString("file_name"));
                 file.setFileVersion(resultSet.getString("file_version"));
                 file.setFileSize(resultSet.getString("file_size"));
-                file.setIsBrowser(resultSet.getBoolean("isbrowser"));
+                file.setPlatformOS(resultSet.getInt("platform_id"));
                 file.setFileStatus(resultSet.getInt("status_type_id"));
                 file.setModifiedDtm(resultSet.getString("modified_dtm"));
                 file.setCreatedDtm(resultSet.getString("created_dtm"));

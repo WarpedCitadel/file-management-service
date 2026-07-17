@@ -31,7 +31,8 @@ public class FileUploadRepository {
             insertStatement.setString(1, file.getGameProfileUUID());
             insertStatement.setString(2, file.getFileName());
             insertStatement.setString(3, file.getFileVersion());
-            insertStatement.setString(4, file.getFileSize());
+            insertStatement.setInt(4, file.getPlatformOS());
+            insertStatement.setString(5, file.getFileSize());
 
             ResultSet resultSet = insertStatement.executeQuery();
 

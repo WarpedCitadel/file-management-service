@@ -8,6 +8,7 @@ public class FileMetaDataModel {
     private String appUserUUID;
     private String fileName;
     private String fileVersion;
+    private int platformOS;
     private String fileSize;
     private String statusType;
 
@@ -25,10 +26,11 @@ public class FileMetaDataModel {
         this.fileVersion = fileVersion;
     }
 
-    public FileMetaDataModel(String gameProfileUUID, String fileName, String fileVersion, String fileSize) {
+    public FileMetaDataModel(String gameProfileUUID, String fileName, String fileVersion, int platformOS, String fileSize) {
         this.gameProfileUUID = gameProfileUUID;
         this.fileName = fileName;
         this.fileVersion = fileVersion;
+        this.platformOS = platformOS;
         this.fileSize = fileSize;
     }
 
@@ -54,6 +56,10 @@ public class FileMetaDataModel {
 
     public String getFileVersion() {
         return fileVersion;
+    }
+
+    public int getPlatformOS() {
+        return platformOS;
     }
 
     public String getFileSize() {

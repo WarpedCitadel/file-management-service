@@ -1,8 +1,8 @@
 package com.warpedcitadel.filemanagementservice.fileupload;
 
 
+import com.warpedcitadel.filemanagementservice.fileupload.dto.FileUploadDto;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDetails;
-import com.warpedcitadel.filemanagementservice.fileupload.model.FileMetaDataModel;
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageMetaDataModel;
 import com.warpedcitadel.filemanagementservice.payload.ApiResponse;
 import org.springframework.http.HttpStatus;
@@ -33,9 +33,9 @@ public class FileUploadController {
 
     @PostMapping(value = "/upload/game", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> uploadGameFile(@RequestPart("file") MultipartFile file,
-                                                              @RequestPart("fileDetails") FileMetaDataModel fileDetails,
+                                                              @RequestPart("fileDetails") FileUploadDto fileUploadDto,
                                                               WebRequest request) throws IOException {
-        fileUploadService.uploadFileToS3(file, fileDetails);
+        fileUploadService.uploadFileToS3(file, fileUploadDto);
         ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.CREATED.value(),
                 "Uploaded game file",
                 request.getDescription(false).replace("uri=", ""),
