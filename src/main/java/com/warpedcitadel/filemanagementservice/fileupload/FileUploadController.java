@@ -44,7 +44,7 @@ public class FileUploadController {
     }
 
 
-    @PostMapping(value = "/upload/profile/img", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/upload/profile/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> uploadProfileImage(@RequestPart("file") MultipartFile file,
                                                                   @RequestPart("fileDetails") ImageMetaDataModel fileDetails,
                                                                   WebRequest request) throws IOException {
@@ -57,7 +57,7 @@ public class FileUploadController {
     }
 
 
-    @PostMapping(value = "/upload/game/img", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/upload/gameImage", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> uploadProfileImage(@RequestPart("file") List<MultipartFile> file,
                                                                   @RequestPart("details") List<GameImageDetails> details,
                                                                   WebRequest request) throws IOException {
