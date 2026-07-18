@@ -7,7 +7,7 @@ import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDto;
 import com.warpedcitadel.filemanagementservice.fileupload.model.FileMetaDataModel;
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageMetaDataModel;
 import com.warpedcitadel.filemanagementservice.fileupload.validation.FileValidation;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.warpedcitadel.filemanagementservice.util.VirusScanService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,20 +26,21 @@ public class FileUploadService {
     @Value("${aws.valid-bucket.name}")
     private String bucketName;
 
-    @Autowired
     private final S3Client s3Client;
-
-    @Autowired
-    private FileUploadRepository repository;
-
-    @Autowired
-    private FileValidation fileValidation;
+    private final FileUploadRepository repository;
+    private final FileValidation fileValidation;
+    private final VirusScanService clamAVClient;
 
 
-    @Autowired
-    public FileUploadService(S3Client s3Client) {
+    public FileUploadService(S3Client s3Client, FileUploadRepository repository,
+                             FileValidation fileValidation, VirusScanService clamAVClient) {
+
         this.s3Client = s3Client;
+        this.repository = repository;
+        this.fileValidation = fileValidation;
+        this.clamAVClient = clamAVClient;
     }
+
 
     public void uploadFileToS3(MultipartFile file, FileUploadDto fileUploadDto) throws IOException {
         recordFileMetaData(file, fileUploadDto);
@@ -51,11 +52,16 @@ public class FileUploadService {
 
 
     public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws IOException {
+
         ImageMetaDataModel image = recordImageMetaData(file, imageDetails);
 
         String prefix = "images/users/" + image.getFileUUID() + "/image/" + image.getFileName();
-
         uploadFileS3(file, prefix);
+        boolean result = clamAVClient.processFile(file);
+
+        if (result) {
+            System.out.println("File ready for transfer");
+        }
     }
 
 

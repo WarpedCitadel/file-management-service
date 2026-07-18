@@ -1,22 +1,67 @@
 services:
+  clamav:
+    image: clamav/clamav:stable
+    container_name: clamav_service
+    restart: unless-stopped
+    ports:
+      - "3310:3310"
+    environment:
+      - CLAMAV_NO_DB_UPDATE=false
+      - CLAMD_CONF_StreamMaxLength=250M
+      - CLAMD_CONF_MaxFileSize=250M
+      - CLAMD_CONF_MaxScanSize=250M
+      - LogTime yes
+      - LogVerbose yes
+    volumes:
+      - clamav_data:/var/lib/clamav
+
   wc_local:
-    image: file-management-service/local
+    image: file-management-service:local
     build:
       context: ./
       dockerfile: dockerfile
+    restart: unless-stopped
     env_file:
       - .env
     ports:
       - "8081:8081"
+    environment:
+      - CLAMAV_HOST=clamav
+      - CLAMAV_PORT=3310
+      - CLAMAV_TIMEOUT=10000
+    depends_on:
+      clamav:
+        condition: service_started
+
+
   wc_dev:
     image: warpedcitadel/file-management-service:dev
     env_file:
       - .env
     ports:
       - "8081:8081"
+    environment:
+      - CLAMAV_HOST=clamav
+      - CLAMAV_PORT=3310
+      - CLAMAV_TIMEOUT=10000
+    depends_on:
+      clamav:
+        condition: service_started
+
+
   wc_prod:
     image: warpedcitadel/file-management-service:prod
     env_file:
       - .env
     ports:
       - "8081:8081"
+    environment:
+      - CLAMAV_HOST=clamav
+      - CLAMAV_PORT=3310
+      - CLAMAV_TIMEOUT=10000
+    depends_on:
+      clamav:
+        condition: service_started
+
+volumes:
+  clamav_data:

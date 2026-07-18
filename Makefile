@@ -44,8 +44,8 @@ deploy_local:
 	@echo Deploying LOCAL $(CONTAINER_NAME) at $(localappip):$(localappport). Are you sure? [Y/n]
 	@read line; if [ ! $$line = "Y" ] && [ ! $$line = "y" ]; then echo Aborting...; exit 1; fi
 
-	@echo "Building image $(IMAGE_NAME)/local..."
-	docker build -t $(IMAGE_NAME)/local .
+	@echo "Building image $(IMAGE_NAME)-local..."
+	docker build -t $(IMAGE_NAME):local .
 
 	@echo "Building container $(CONTAINER_NAME)..."
 	docker compose up wc_local --build -d
@@ -80,8 +80,15 @@ rip_local:
 	-docker stop $(CONTAINER_NAME)-wc_local-1
 	-docker rm $(CONTAINER_NAME)-wc_local-1
 
-	@echo "Removing image $(IMAGE_NAME)/local..."
-	-docker rmi -f $(IMAGE_NAME)/local
+	@echo "Stopping and removing container ClamAV Service..."
+	-docker stop clamav_service
+	-docker rm clamav_service
+
+	@echo "Removing image $(IMAGE_NAME)-local..."
+	-docker rmi -f $(IMAGE_NAME):local
+
+	@echo "Removing image clamav-stable..."
+	-docker rmi -f clamav/clamav:stable
 
 rip_dev:
 	@echo Ripping DEV $(CONTAINER_NAME)/dev at $(localappip):$(localappport). Are you sure? [Y/n]
@@ -114,8 +121,8 @@ rip_deploy_local:
 	@echo "Stopping $(CONTAINER_NAME)..."
 	docker compose down
 
-	@echo "Building image $(IMAGE_NAME)..."
-	docker build -t $(IMAGE_NAME)/local .
+	@echo "Building image $(IMAGE_NAME)-local..."
+	docker build -t $(IMAGE_NAME):local .
 
 	@echo "Building container file-management-service..."
 	docker compose up wc_local --build -d

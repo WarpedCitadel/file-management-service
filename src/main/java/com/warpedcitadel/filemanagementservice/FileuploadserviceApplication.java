@@ -10,5 +10,4 @@ public class FileuploadserviceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(FileuploadserviceApplication.class, args);
 	}
-
 }

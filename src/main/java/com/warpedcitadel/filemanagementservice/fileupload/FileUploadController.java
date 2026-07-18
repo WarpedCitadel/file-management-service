@@ -35,6 +35,7 @@ public class FileUploadController {
     public ResponseEntity<ApiResponse<String>> uploadGameFile(@RequestPart("file") MultipartFile file,
                                                               @RequestPart("fileDetails") FileUploadDto fileUploadDto,
                                                               WebRequest request) throws IOException {
+
         fileUploadService.uploadFileToS3(file, fileUploadDto);
         ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.CREATED.value(),
                 "Uploaded game file",
@@ -48,6 +49,7 @@ public class FileUploadController {
     public ResponseEntity<ApiResponse<String>> uploadProfileImage(@RequestPart("file") MultipartFile file,
                                                                   @RequestPart("fileDetails") ImageMetaDataModel fileDetails,
                                                                   WebRequest request) throws IOException {
+
         fileUploadService.uploadImageToS3(file, fileDetails);
         ApiResponse<String> fileData = new ApiResponse<>("Update", HttpStatus.OK.value(),
                 "Changed profile image",
