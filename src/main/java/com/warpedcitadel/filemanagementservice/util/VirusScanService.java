@@ -66,7 +66,7 @@ public class VirusScanService {
         }
     }
 
-    public boolean processFile(MultipartFile file) throws IOException{
+    public boolean processFile(MultipartFile file) throws IOException {
 
         try {
             String result = virusScan(file);

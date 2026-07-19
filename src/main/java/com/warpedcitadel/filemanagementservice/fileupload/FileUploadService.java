@@ -63,8 +63,11 @@ public class FileUploadService {
 
 
     public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws IOException {
-
         try {
+            if (!fileValidation.isValidFile(file,
+                    new String[]{".jpeg", ".png", ".jpg"}, 2000000)) {
+                throw new IllegalArgumentException("Invalid file type: " + file.getContentType());
+            }
             ImageMetaDataModel image = recordImageMetaDataToStaging(file, imageDetails);
             String prefix = "images/users/" + image.getFileUUID() + "/image/" + image.getFileName();
             uploadFileS3(file, prefix);
@@ -94,37 +97,38 @@ public class FileUploadService {
 
 
     public void uploadGameImageToS3(List<MultipartFile> files, List<GameImageDetails> fileDetails) throws IOException {
-
-        if (files.size() != fileDetails.size()) {
-            throw new IllegalArgumentException(
-                    "Each file must have corresponding file details.");
-        }
-
-        List<GameImageDto> imageMetaData = new ArrayList<>();
-
-        for (int i = 0; i < files.size(); i++) {
-
-            imageMetaData.add(new GameImageDto(files.get(i), fileDetails.get(i)));
-        }
-
-        for (int i = 0; i < imageMetaData.size(); i++) {
-
-            if (!fileValidation.isValidFile(imageMetaData.get(i).file(),
-                    new String[]{".jpeg", ".png", ".jpg"}, 2000000)) {
-
-                throw new IllegalArgumentException("Invalid File type: " + imageMetaData.get(i).file().getContentType());
+        try {
+            if (files.size() != fileDetails.size()) {
+                throw new IllegalArgumentException(
+                        "Each file must have corresponding file details.");
             }
+            List<GameImageDto> imageMetaData = new ArrayList<>();
+            for (int i = 0; files.size() > i; i++) {
+                if (!fileValidation.isValidFile(files.get(i),
+                        new String[]{".jpeg", ".png", ".jpg"}, 2000000)) {
+                    throw new IllegalArgumentException("Invalid file type: " + files.get(i).getContentType());
+                }
+                imageMetaData.add(new GameImageDto(files.get(i), fileDetails.get(i)));
+            }
+            List<String> fileNames = recordGameImageMetaData(imageMetaData);
+            List<String> prefixList = new ArrayList<>();
+            for (int i = 0; files.size() > i; i++) {
+                String prefix = "images/games/" + fileDetails.get(i).gameProfileUUID() + "/gameImages/" + fileNames.get(i);
+                uploadFileS3(files.get(i), prefix);
+                prefixList.add(prefix);
+                boolean result = clamAVClient.processFile(files.get(i));
+                if (!result) {
+                    for (int j = 0; prefixList.size() > j; j++) {
+                        deleteS3Objects(validName, prefixList.get(j));
+                    }
+                    // TODO: delete staging files method
+                    throw new IOException("Malformed file detected");
+                }
+            }
+        } catch (IOException exception) {
+            log.error("Failed to upload game images for game profile ID: {}", fileDetails.getFirst().gameProfileUUID());
+            throw exception;
         }
-
-        List<String> fileNames = recordGameImageMetaData(imageMetaData);
-
-        for (int i = 0; files.size() > i; i++) {
-
-            String prefix = "images/games/" + fileDetails.get(i).gameProfileUUID() + "/gameImages/" + fileNames.get(i);
-
-            uploadFileS3(files.get(i), prefix);
-        }
-
     }
 
 

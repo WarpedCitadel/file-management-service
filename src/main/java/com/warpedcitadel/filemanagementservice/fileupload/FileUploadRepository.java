@@ -59,27 +59,20 @@ public class FileUploadRepository {
 
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
-
             insertStatement.setString(1, file.getAppUserUUID());
-
             ResultSet resultSet = insertStatement.executeQuery();
-
             ImageFileTransferModel profileImage = new ImageFileTransferModel();
 
             if (resultSet.next()) {
-
                  profileImage.setNewFileName(resultSet.getString("new_file_name"));
                  profileImage.setNewFileUUID(resultSet.getString("new_img_uuid"));
                  profileImage.setOldFileName(resultSet.getString("old_file_name"));
                  profileImage.setOldFileUUID(resultSet.getString("old_img_uuid"));
-
                 return profileImage;
             } else {
-
                 throw new RuntimeException("Failed to insert file metadata to the database");
             }
         } catch (SQLException exception) {
-
             throw new RuntimeException("Could not retrieve image UUID: ", exception);
         }
     }
@@ -109,10 +102,10 @@ public class FileUploadRepository {
             insertStatement.setArray(3, connection.createArrayOf("text", fileSizes));
             insertStatement.setArray(4, connection.createArrayOf("bool", isCover));
 
-            try (ResultSet rs = insertStatement.executeQuery()) {
-                while (rs.next()) {
+            try (ResultSet resultSet = insertStatement.executeQuery()) {
+                while (resultSet.next()) {
 
-                    gameImageList.add(rs.getString("file_name"));
+                    gameImageList.add(resultSet.getString("file_name"));
                 }
             }
 

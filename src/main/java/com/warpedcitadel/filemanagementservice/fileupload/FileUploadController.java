@@ -21,7 +21,7 @@ import java.time.Instant;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/api/user", version = "1.0")
+@RequestMapping(path = "/api", version = "1.0")
 public class FileUploadController {
 
     private final FileUploadService fileUploadService;
@@ -31,7 +31,7 @@ public class FileUploadController {
     }
 
 
-    @PostMapping(value = "/upload/game", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/upload/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> uploadGameFile(@RequestPart("file") MultipartFile file,
                                                               @RequestPart("fileDetails") FileUploadDto fileUploadDto,
                                                               WebRequest request) throws IOException {
@@ -45,17 +45,17 @@ public class FileUploadController {
     }
 
 
-    @PostMapping(value = "/upload/profile/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/upload/profileImage", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> uploadProfileImage(@RequestPart("file") MultipartFile file,
                                                                   @RequestPart("fileDetails") ImageMetaDataModel fileDetails,
                                                                   WebRequest request) throws IOException {
 
         fileUploadService.uploadImageToS3(file, fileDetails);
-        ApiResponse<String> fileData = new ApiResponse<>("Update", HttpStatus.OK.value(),
+        ApiResponse<String> fileData = new ApiResponse<>("Update", HttpStatus.CREATED.value(),
                 "Changed profile image",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
-        return new ResponseEntity<>(fileData, HttpStatus.OK);
+        return new ResponseEntity<>(fileData, HttpStatus.CREATED);
     }
 
 
@@ -65,10 +65,10 @@ public class FileUploadController {
                                                                   WebRequest request) throws IOException {
 
         fileUploadService.uploadGameImageToS3(file, details);
-        ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.OK.value(),
+        ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.CREATED.value(),
                 "Uploaded game profile images",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
-        return new ResponseEntity<>(fileData, HttpStatus.OK);
+        return new ResponseEntity<>(fileData, HttpStatus.CREATED);
     }
 }
