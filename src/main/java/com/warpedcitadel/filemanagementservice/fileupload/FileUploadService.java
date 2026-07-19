@@ -7,6 +7,7 @@ import com.warpedcitadel.filemanagementservice.fileupload.dto.FileUploadDto;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDetails;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDto;
 import com.warpedcitadel.filemanagementservice.fileupload.model.FileMetaDataModel;
+import com.warpedcitadel.filemanagementservice.fileupload.model.ImageFileTransferModel;
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageMetaDataModel;
 import com.warpedcitadel.filemanagementservice.fileupload.validation.FileValidation;
 import com.warpedcitadel.filemanagementservice.util.VirusScanService;
@@ -29,6 +30,9 @@ public class FileUploadService {
 
     @Value("${aws.valid-bucket.name}")
     private String validName;
+
+    @Value("${aws.image-bucket.name}")
+    private String imageBucketName;
 
     private final S3Client s3Client;
     private final FileUploadRepository repository;
@@ -61,7 +65,6 @@ public class FileUploadService {
     public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws IOException {
 
         try {
-
             ImageMetaDataModel image = recordImageMetaDataToStaging(file, imageDetails);
             String prefix = "images/users/" + image.getFileUUID() + "/image/" + image.getFileName();
             uploadFileS3(file, prefix);
@@ -71,12 +74,17 @@ public class FileUploadService {
                 repository.deleteStagingImage(imageDetails);
                 throw new IOException("Malformed file content detected");
             } else {
-                ImageMetaDataModel profileImageModel = repository.recordImageMetaData(imageDetails);
+                ImageFileTransferModel profileImageModel = repository.recordImageMetaData(imageDetails);
                 RequestData profileImage = new RequestData(
-                        profileImageModel.getFileUUID(),
-                        profileImageModel.getFileName()
+                        profileImageModel.getNewFileUUID(),
+                        profileImageModel.getNewFileName()
                 );
+                String oldPrefix = "images/users/" + profileImageModel.getOldFileUUID() +
+                        "/image/" + profileImageModel.getOldFileName();
                 fileTransferService.transferProfileImageToS3(profileImage);
+                if (!isStaticImage(profileImageModel.getOldFileUUID())) {
+                    deleteS3Objects(imageBucketName, oldPrefix);
+                }
             }
         } catch (IOException exception) {
             log.error("Failed to upload image file: {}", file.getOriginalFilename());
@@ -250,5 +258,16 @@ public class FileUploadService {
             return newFilename + rawFileName.substring(lastDotIndex);
         }
         return rawFileName;
+    }
+
+
+    private boolean isStaticImage(String fileUUID) {
+        String[] staticAssets = new String[]{"019f7b16-635a-7c13-b15d-ed3c75ad61f9"};
+        for (String file : staticAssets) {
+            if (fileUUID.equals(file)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

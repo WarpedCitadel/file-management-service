@@ -2,9 +2,9 @@ package com.warpedcitadel.filemanagementservice.fileupload;
 
 
 import com.warpedcitadel.filemanagementservice.fileupload.model.FileMetaDataModel;
+import com.warpedcitadel.filemanagementservice.fileupload.model.ImageFileTransferModel;
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageMetaDataModel;
 import com.warpedcitadel.filemanagementservice.util.SQLFileReader;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -15,10 +15,14 @@ import java.util.List;
 @Repository
 public class FileUploadRepository {
 
-    @Autowired
-    private DataSource wcDatabase;
+
+    private final DataSource wcDatabase;
 
     SQLFileReader loadSQL = new SQLFileReader();
+
+    public FileUploadRepository(DataSource wcDatabase) {
+        this.wcDatabase = wcDatabase;
+    }
 
 
     public String recordFileMetaData(FileMetaDataModel file) {
@@ -49,7 +53,8 @@ public class FileUploadRepository {
         }
     }
 
-    public ImageMetaDataModel recordImageMetaData(ImageMetaDataModel file) {
+
+    public ImageFileTransferModel recordImageMetaData(ImageMetaDataModel file) {
         String insertSQL = loadSQL.loadSQL("/filedata/update--update_user_profile_img.sql");
 
         try (Connection connection = wcDatabase.getConnection();
@@ -59,12 +64,16 @@ public class FileUploadRepository {
 
             ResultSet resultSet = insertStatement.executeQuery();
 
+            ImageFileTransferModel profileImage = new ImageFileTransferModel();
+
             if (resultSet.next()) {
 
-                 file.setFileName(resultSet.getString("file_name"));
-                 file.setFileUUID(resultSet.getString("img_uuid"));
+                 profileImage.setNewFileName(resultSet.getString("new_file_name"));
+                 profileImage.setNewFileUUID(resultSet.getString("new_img_uuid"));
+                 profileImage.setOldFileName(resultSet.getString("old_file_name"));
+                 profileImage.setOldFileUUID(resultSet.getString("old_img_uuid"));
 
-                return file;
+                return profileImage;
             } else {
 
                 throw new RuntimeException("Failed to insert file metadata to the database");
