@@ -110,20 +110,32 @@ public class FileUploadService {
                 }
                 imageMetaData.add(new GameImageDto(files.get(i), fileDetails.get(i)));
             }
-            List<String> fileNames = recordGameImageMetaData(imageMetaData);
+            List<String> fileNames = recordGameImageToStaging(imageMetaData);
             List<String> prefixList = new ArrayList<>();
+            List<RequestData> gameImages = new ArrayList<>();
             for (int i = 0; files.size() > i; i++) {
                 String prefix = "images/games/" + fileDetails.get(i).gameProfileUUID() + "/gameImages/" + fileNames.get(i);
                 uploadFileS3(files.get(i), prefix);
+                RequestData image = new RequestData(
+                        fileDetails.get(i).gameProfileUUID(),
+                        fileNames.get(i)
+                );
+                gameImages.add(image);
                 prefixList.add(prefix);
                 boolean result = clamAVClient.processFile(files.get(i));
                 if (!result) {
                     for (int j = 0; prefixList.size() > j; j++) {
                         deleteS3Objects(validName, prefixList.get(j));
                     }
-                    // TODO: delete staging files method
+                    repository.deleteStagingGameImages(fileDetails.getFirst().gameProfileUUID());
                     throw new IOException("Malformed file detected");
                 }
+            }
+            if (files.size() == gameImages.size()) {
+                repository.recordGameImageMetaData(fileDetails.getFirst().gameProfileUUID());
+                fileTransferService.transferGameImagesToS3(gameImages);
+                log.info("A total of ({}) images files uploaded successfully for game profile ID: ({})",
+                        gameImages.size() ,fileDetails.getFirst().gameProfileUUID());
             }
         } catch (IOException exception) {
             log.error("Failed to upload game images for game profile ID: {}", fileDetails.getFirst().gameProfileUUID());
@@ -167,25 +179,19 @@ public class FileUploadService {
     }
 
 
-    public List<String> recordGameImageMetaData(List<GameImageDto> gameImageList) {
-
+    public List<String> recordGameImageToStaging(List<GameImageDto> gameImageList) {
         List<ImageMetaDataModel> gameImageModelList = new ArrayList<>();
-
         for (int i = 0; gameImageList.size() > i; i++) {
-
             String fileSize = formatBytes(gameImageList.get(i).file());
-
             ImageMetaDataModel imageMetaDataModel = new ImageMetaDataModel(
                     gameImageList.get(i).details().gameProfileUUID(),
                     updateFileName(gameImageList.get(i).file().getOriginalFilename()),
                     fileSize,
                     gameImageList.get(i).details().isCover()
             );
-
             gameImageModelList.add(imageMetaDataModel);
         }
-
-        return repository.recordGameImageMetaData(gameImageModelList);
+        return repository.recordGameImageToStaging(gameImageModelList);
     }
 
 

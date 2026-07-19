@@ -5,6 +5,8 @@ import com.warpedcitadel.filemanagementservice.fileupload.model.FileMetaDataMode
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageFileTransferModel;
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageMetaDataModel;
 import com.warpedcitadel.filemanagementservice.util.SQLFileReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -16,6 +18,7 @@ import java.util.List;
 public class FileUploadRepository {
 
 
+    private static final Logger log = LoggerFactory.getLogger(FileUploadRepository.class);
     private final DataSource wcDatabase;
 
     SQLFileReader loadSQL = new SQLFileReader();
@@ -78,7 +81,7 @@ public class FileUploadRepository {
     }
 
 
-    public List<String> recordGameImageMetaData (List<ImageMetaDataModel> files) {
+    public List<String> recordGameImageMetaData(String gameProfileUUID) {
 
         String insertSQL = loadSQL.loadSQL("/filedata/insert--record_game_image_file.sql");
         List<String> gameImageList = new ArrayList<>();
@@ -86,34 +89,16 @@ public class FileUploadRepository {
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {
 
-            String[] fileNames = new String[files.size()];
-            String[] fileSizes = new String[files.size()];
-            Object[] isCover = new Object[files.size()];
-
-            for (int i = 0; i < files.size(); i++) {
-                ImageMetaDataModel file = files.get(i);
-                fileNames[i] = file.getFileName();
-                fileSizes[i] = file.getFileSize();
-                isCover[i] = file.getIsCover();
-            }
-
-            insertStatement.setString(1, files.getFirst().getAppUserUUID());
-            insertStatement.setArray(2, connection.createArrayOf("text", fileNames));
-            insertStatement.setArray(3, connection.createArrayOf("text", fileSizes));
-            insertStatement.setArray(4, connection.createArrayOf("bool", isCover));
+            insertStatement.setString(1, gameProfileUUID);
 
             try (ResultSet resultSet = insertStatement.executeQuery()) {
                 while (resultSet.next()) {
-
                     gameImageList.add(resultSet.getString("file_name"));
                 }
             }
-
         } catch (SQLException exception) {
-
             throw new RuntimeException("Could not record image metadata", exception);
         }
-
         return gameImageList;
     }
 
@@ -147,29 +132,80 @@ public class FileUploadRepository {
         }
     }
 
-    public ImageMetaDataModel deleteStagingImage(ImageMetaDataModel file) {
-        String insertSQL = loadSQL.loadSQL("/filedata/delete--delete_staging_image_record.sql");
 
+    public List<String> recordGameImageToStaging(List<ImageMetaDataModel> files) {
+        String insertSQL = loadSQL.loadSQL("/filedata/insert--record_game_images_staging.sql");
+        List<String> gameImageList = new ArrayList<>();
         try (Connection connection = wcDatabase.getConnection();
-             PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {
 
-            insertStatement.setString(1, file.getAppUserUUID());
+            String[] fileNames = new String[files.size()];
+            String[] fileSizes = new String[files.size()];
+            Object[] isCover = new Object[files.size()];
+            for (int i = 0; i < files.size(); i++) {
+                ImageMetaDataModel file = files.get(i);
+                fileNames[i] = file.getFileName();
+                fileSizes[i] = file.getFileSize();
+                isCover[i] = file.getIsCover();
+            }
 
-            ResultSet resultSet = insertStatement.executeQuery();
+            insertStatement.setString(1, files.getFirst().getAppUserUUID());
+            insertStatement.setArray(2, connection.createArrayOf("text", fileNames));
+            insertStatement.setArray(3, connection.createArrayOf("text", fileSizes));
+            insertStatement.setArray(4, connection.createArrayOf("bool", isCover));
 
-            if (resultSet.next()) {
-
-                file.setFileName(resultSet.getString("file_name"));
-                file.setFileUUID(resultSet.getString("img_uuid"));
-
-                return file;
-            } else {
-
-                throw new RuntimeException("Failed to insert file metadata to the database");
+            try (ResultSet resultSet = insertStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    gameImageList.add(resultSet.getString("file_name"));
+                }
             }
         } catch (SQLException exception) {
+            log.error("Database error: {}", exception.getMessage());
+            throw new RuntimeException("Failed to record game images");
+        }
+        return gameImageList;
+    }
 
+
+    public ImageMetaDataModel deleteStagingImage(ImageMetaDataModel file) {
+        String deleteSQL = loadSQL.loadSQL("/filedata/delete--delete_staging_image_record.sql");
+
+        try (Connection connection = wcDatabase.getConnection();
+             PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL, Statement.RETURN_GENERATED_KEYS)) {
+            deleteStatement.setString(1, file.getAppUserUUID());
+            ResultSet resultSet = deleteStatement.executeQuery();
+
+            if (resultSet.next()) {
+                file.setFileName(resultSet.getString("file_name"));
+                file.setFileUUID(resultSet.getString("img_uuid"));
+                log.info("Deleting profile image ({}), file ID: {}", file.getFileName(), file.getFileUUID());
+                return file;
+            } else {
+                throw new RuntimeException("Failed to delete staging image data");
+            }
+        } catch (SQLException exception) {
             throw new RuntimeException("Could not retrieve image UUID: ", exception);
         }
+    }
+
+
+    public List<String> deleteStagingGameImages(String gameProfileUUID) {
+        String deleteSQL = loadSQL.loadSQL("/filedata/delete--delete_staging_game_image_record.sql");
+        List<String> imageList = new ArrayList<>();
+        try (Connection connection = wcDatabase.getConnection();
+             PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL, Statement.RETURN_GENERATED_KEYS)) {
+            deleteStatement.setString(1, gameProfileUUID);
+            ResultSet resultSet = deleteStatement.executeQuery();
+
+            int i = 0;
+            while (resultSet.next()) {
+                imageList.add(resultSet.getString("file_name"));
+                log.info("Deleting game image ({}) from game profile ID: {}", imageList.get(i), gameProfileUUID);
+                i++;
+            }
+        } catch (SQLException exception) {
+            throw new RuntimeException("Could not retrieve game profile UUID: ", exception);
+        }
+        return imageList;
     }
 }
