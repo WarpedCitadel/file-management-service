@@ -64,7 +64,7 @@ public class VirusScanService {
 
             long elapsed = System.currentTimeMillis() - start;
 
-            log.info("Scanned {} ({} bytes) in {} ms - Clean: {}",
+            log.info("Scanned {} ({} bytes) in {} ms - result: {}",
                     file.getOriginalFilename(),
                     file.getSize(),
                     elapsed,
@@ -74,28 +74,21 @@ public class VirusScanService {
         }
     }
 
-    public boolean processFile(MultipartFile file) {
+    public boolean processFile(MultipartFile file) throws IOException{
 
         try {
             String result = virusScan(file);
-
             if (result.contains("OK")) {
-
-                System.out.println("File is clean. Processing continued.");
                 return true;
             } else if (result.contains("FOUND")) {
-
-                System.out.println("Malware detected. Processing canceled.");
+                log.warn("Detected malformed file: {}", file.getOriginalFilename());
                 return false;
             } else {
-
-                System.out.println("Error occurred. Processing canceled.");
+                log.warn("Error processing file: {}", file.getOriginalFilename());
                 return false;
             }
-        } catch (Exception exception) {
-
-            System.out.println("Error occurred. Processing canceled.");
-            return false;
+        } catch (IOException exception) {
+            throw exception;
         }
     }
 }

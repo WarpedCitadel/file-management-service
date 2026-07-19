@@ -10,6 +10,8 @@ import com.warpedcitadel.filemanagementservice.fileupload.model.FileMetaDataMode
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageMetaDataModel;
 import com.warpedcitadel.filemanagementservice.fileupload.validation.FileValidation;
 import com.warpedcitadel.filemanagementservice.util.VirusScanService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +35,7 @@ public class FileUploadService {
     private final FileValidation fileValidation;
     private final VirusScanService clamAVClient;
     private final FileTransferService fileTransferService;
+    private final Logger log = LoggerFactory.getLogger(FileUploadService.class);
 
 
     public FileUploadService(S3Client s3Client, FileUploadRepository repository,
@@ -57,30 +60,27 @@ public class FileUploadService {
 
     public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws IOException {
 
-        ImageMetaDataModel image = recordImageMetaDataToStaging(file, imageDetails);
+        try {
 
-        String prefix = "images/users/" + image.getFileUUID() + "/image/" + image.getFileName();
-        uploadFileS3(file, prefix);
-        boolean result = clamAVClient.processFile(file);
-
-        if (!result) {
-            System.out.println("Deleting image contents in S3 staging");
-            deleteS3Objects(validName, prefix);
-            System.out.println("Deleting image contents in database staging table");
-            repository.deleteStagingImage(imageDetails);
-            throw new RuntimeException("Malformed content detected in file upload");
-        } else {
-            System.out.println("Transferring image metadata out of staging table");
-            ImageMetaDataModel profileImageModel = repository.recordImageMetaData(imageDetails);
-
-            RequestData profileImage = new RequestData(
-                    profileImageModel.getFileUUID(),
-                    profileImageModel.getFileName()
-            );
-
-            System.out.println("Profile image ready for transfer to S3");
-            fileTransferService.transferProfileImageToS3(profileImage);
-            System.out.println("Profile image transferred");
+            ImageMetaDataModel image = recordImageMetaDataToStaging(file, imageDetails);
+            String prefix = "images/users/" + image.getFileUUID() + "/image/" + image.getFileName();
+            uploadFileS3(file, prefix);
+            boolean result = clamAVClient.processFile(file);
+            if (!result) {
+                deleteS3Objects(validName, prefix);
+                repository.deleteStagingImage(imageDetails);
+                throw new IOException("Malformed file content detected");
+            } else {
+                ImageMetaDataModel profileImageModel = repository.recordImageMetaData(imageDetails);
+                RequestData profileImage = new RequestData(
+                        profileImageModel.getFileUUID(),
+                        profileImageModel.getFileName()
+                );
+                fileTransferService.transferProfileImageToS3(profileImage);
+            }
+        } catch (IOException exception) {
+            log.error("Failed to upload image file: {}", file.getOriginalFilename());
+            throw exception;
         }
     }
 
@@ -198,8 +198,6 @@ public class FileUploadService {
     private void deleteS3Objects(String bucketName, String prefix) {
 
         String continuationToken = null;
-
-        System.out.println("Deleting virus file in S3 staging bucket");
         do {
 
             ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
@@ -245,18 +243,12 @@ public class FileUploadService {
     }
 
 
-    // TODO: update logic later and possibly use data from DB
     private String updateFileName(String rawFileName){
-
         int lastDotIndex = rawFileName.lastIndexOf(".");
-
         if (lastDotIndex > 0 && lastDotIndex < rawFileName.length() - 1) {
-
             String newFilename = UUID.randomUUID().toString();
             return newFilename + rawFileName.substring(lastDotIndex);
         }
-
         return rawFileName;
     }
 }
-
