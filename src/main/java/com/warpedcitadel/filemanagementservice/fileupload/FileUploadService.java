@@ -1,6 +1,8 @@
 package com.warpedcitadel.filemanagementservice.fileupload;
 
 
+import com.warpedcitadel.filemanagementservice.filetransfer.FileTransferService;
+import com.warpedcitadel.filemanagementservice.filetransfer.dto.RequestData;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.FileUploadDto;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDetails;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDto;
@@ -13,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,21 +26,23 @@ import java.util.UUID;
 public class FileUploadService {
 
     @Value("${aws.valid-bucket.name}")
-    private String bucketName;
+    private String validName;
 
     private final S3Client s3Client;
     private final FileUploadRepository repository;
     private final FileValidation fileValidation;
     private final VirusScanService clamAVClient;
+    private final FileTransferService fileTransferService;
 
 
     public FileUploadService(S3Client s3Client, FileUploadRepository repository,
-                             FileValidation fileValidation, VirusScanService clamAVClient) {
+                             FileValidation fileValidation, VirusScanService clamAVClient, FileTransferService fileTransferService) {
 
         this.s3Client = s3Client;
         this.repository = repository;
         this.fileValidation = fileValidation;
         this.clamAVClient = clamAVClient;
+        this.fileTransferService = fileTransferService;
     }
 
 
@@ -53,14 +57,30 @@ public class FileUploadService {
 
     public void uploadImageToS3(MultipartFile file, ImageMetaDataModel imageDetails) throws IOException {
 
-        ImageMetaDataModel image = recordImageMetaData(file, imageDetails);
+        ImageMetaDataModel image = recordImageMetaDataToStaging(file, imageDetails);
 
         String prefix = "images/users/" + image.getFileUUID() + "/image/" + image.getFileName();
         uploadFileS3(file, prefix);
         boolean result = clamAVClient.processFile(file);
 
-        if (result) {
-            System.out.println("File ready for transfer");
+        if (!result) {
+            System.out.println("Deleting image contents in S3 staging");
+            deleteS3Objects(validName, prefix);
+            System.out.println("Deleting image contents in database staging table");
+            repository.deleteStagingImage(imageDetails);
+            throw new RuntimeException("Malformed content detected in file upload");
+        } else {
+            System.out.println("Transferring image metadata out of staging table");
+            ImageMetaDataModel profileImageModel = repository.recordImageMetaData(imageDetails);
+
+            RequestData profileImage = new RequestData(
+                    profileImageModel.getFileUUID(),
+                    profileImageModel.getFileName()
+            );
+
+            System.out.println("Profile image ready for transfer to S3");
+            fileTransferService.transferProfileImageToS3(profileImage);
+            System.out.println("Profile image transferred");
         }
     }
 
@@ -69,7 +89,7 @@ public class FileUploadService {
 
         if (files.size() != fileDetails.size()) {
             throw new IllegalArgumentException(
-                    "Each file must have corresponding fileDetails.");
+                    "Each file must have corresponding file details.");
         }
 
         List<GameImageDto> imageMetaData = new ArrayList<>();
@@ -118,7 +138,7 @@ public class FileUploadService {
     }
 
 
-    public ImageMetaDataModel recordImageMetaData(MultipartFile file, ImageMetaDataModel imageDetails) {
+    public ImageMetaDataModel recordImageMetaDataToStaging(MultipartFile file, ImageMetaDataModel imageDetails) {
         if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"}, 2000000)) {
 
             throw new IllegalArgumentException("Wrong file format: " + file.getOriginalFilename());
@@ -131,7 +151,7 @@ public class FileUploadService {
                 fileSize
         );
 
-        return repository.recordImageMetaData(imageMetaData);
+        return repository.recordImageMetaDataToStaging(imageMetaData);
     }
 
 
@@ -160,12 +180,12 @@ public class FileUploadService {
     private void uploadFileS3(MultipartFile file, String key) throws IOException {
         try {
             s3Client.putObject(PutObjectRequest.builder()
-                            .bucket(bucketName)
+                            .bucket(validName)
                             .key(key)
                             .build(),
                     RequestBody.fromBytes(file.getBytes()));
 
-            s3Client.utilities().getUrl(builder -> builder.bucket(bucketName)
+            s3Client.utilities().getUrl(builder -> builder.bucket(validName)
                     .key(key)).toExternalForm();
         } catch (IOException failedUploadException) {
 
@@ -175,6 +195,40 @@ public class FileUploadService {
 
 
 //    ### HELPER FUNCTIONS ###
+    private void deleteS3Objects(String bucketName, String prefix) {
+
+        String continuationToken = null;
+
+        System.out.println("Deleting virus file in S3 staging bucket");
+        do {
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .prefix(prefix)
+                    .continuationToken(continuationToken)
+                    .build();
+
+            ListObjectsV2Response objectList = s3Client.listObjectsV2(listRequest);
+            List<ObjectIdentifier> deletionList = new ArrayList<>();
+
+            for (S3Object s3Object : objectList.contents()) {
+                deletionList.add(ObjectIdentifier.builder().key(s3Object.key()).build());
+            }
+
+            if (!deletionList.isEmpty()) {
+                DeleteObjectsRequest deleteS3Objects = DeleteObjectsRequest.builder()
+                        .bucket(bucketName)
+                        .delete(builder -> builder.objects(deletionList))
+                        .build();
+
+                s3Client.deleteObjects(deleteS3Objects);
+            }
+
+            continuationToken = objectList.nextContinuationToken();
+        } while (continuationToken != null);
+    }
+
+
     private String formatBytes(MultipartFile file) {
         long sizeInBytes = file.getSize();
 

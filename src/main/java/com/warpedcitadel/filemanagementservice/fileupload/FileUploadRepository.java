@@ -56,8 +56,6 @@ public class FileUploadRepository {
              PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
 
             insertStatement.setString(1, file.getAppUserUUID());
-            insertStatement.setString(2, file.getFileName());
-            insertStatement.setString(3, file.getFileSize());
 
             ResultSet resultSet = insertStatement.executeQuery();
 
@@ -115,5 +113,61 @@ public class FileUploadRepository {
         }
 
         return gameImageList;
+    }
+
+
+    // ### STAGING ###
+    public ImageMetaDataModel recordImageMetaDataToStaging(ImageMetaDataModel file) {
+        String insertSQL = loadSQL.loadSQL("/filedata/insert--record_image_metadata.sql");
+
+        try (Connection connection = wcDatabase.getConnection();
+             PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
+
+            insertStatement.setString(1, file.getAppUserUUID());
+            insertStatement.setString(2, file.getFileName());
+            insertStatement.setString(3, file.getFileSize());
+
+            ResultSet resultSet = insertStatement.executeQuery();
+
+            if (resultSet.next()) {
+
+                file.setFileName(resultSet.getString("file_name"));
+                file.setFileUUID(resultSet.getString("img_uuid"));
+
+                return file;
+            } else {
+
+                throw new RuntimeException("Failed to insert file metadata to the database");
+            }
+        } catch (SQLException exception) {
+
+            throw new RuntimeException("Could not retrieve image UUID: ", exception);
+        }
+    }
+
+    public ImageMetaDataModel deleteStagingImage(ImageMetaDataModel file) {
+        String insertSQL = loadSQL.loadSQL("/filedata/delete--delete_staging_image_record.sql");
+
+        try (Connection connection = wcDatabase.getConnection();
+             PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
+
+            insertStatement.setString(1, file.getAppUserUUID());
+
+            ResultSet resultSet = insertStatement.executeQuery();
+
+            if (resultSet.next()) {
+
+                file.setFileName(resultSet.getString("file_name"));
+                file.setFileUUID(resultSet.getString("img_uuid"));
+
+                return file;
+            } else {
+
+                throw new RuntimeException("Failed to insert file metadata to the database");
+            }
+        } catch (SQLException exception) {
+
+            throw new RuntimeException("Could not retrieve image UUID: ", exception);
+        }
     }
 }

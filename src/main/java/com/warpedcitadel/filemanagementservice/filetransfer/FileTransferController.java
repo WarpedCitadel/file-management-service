@@ -18,9 +18,9 @@ import java.util.List;
 @RequestMapping(path = "/api/transfer", version = "1.0")
 public class FileTransferController {
 
-    private final fileTransferService fileTransferService;
+    private final FileTransferService fileTransferService;
 
-    public FileTransferController(fileTransferService fileTransferService) {
+    public FileTransferController(FileTransferService fileTransferService) {
         this.fileTransferService = fileTransferService;
     }
 

@@ -15,7 +15,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 @Service
-public class fileTransferService {
+public class FileTransferService {
 
     @Value("${cloud.aws.region}")
     private String region;
@@ -31,7 +31,7 @@ public class fileTransferService {
 
     private final S3Client s3Client;
 
-    public fileTransferService(S3Client s3Client) {
+    public FileTransferService(S3Client s3Client) {
         this.s3Client = s3Client;
     }
 
