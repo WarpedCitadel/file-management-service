@@ -7,9 +7,9 @@ services:
       - "3310:3310"
     environment:
       - CLAMAV_NO_DB_UPDATE=false
-      - CLAMD_CONF_StreamMaxLength=250M
-      - CLAMD_CONF_MaxFileSize=250M
-      - CLAMD_CONF_MaxScanSize=250M
+      - CLAMD_CONF_StreamMaxLength=1000M
+      - CLAMD_CONF_MaxFileSize=1000M
+      - CLAMD_CONF_MaxScanSize=1000M
       - LogTime yes
       - LogVerbose yes
     volumes:
@@ -28,7 +28,7 @@ services:
     environment:
       - CLAMAV_HOST=clamav
       - CLAMAV_PORT=3310
-      - CLAMAV_TIMEOUT=10000
+      - CLAMAV_TIMEOUT=300000
     depends_on:
       clamav:
         condition: service_started
@@ -43,7 +43,7 @@ services:
     environment:
       - CLAMAV_HOST=clamav
       - CLAMAV_PORT=3310
-      - CLAMAV_TIMEOUT=10000
+      - CLAMAV_TIMEOUT=300000
     depends_on:
       clamav:
         condition: service_started
@@ -58,7 +58,7 @@ services:
     environment:
       - CLAMAV_HOST=clamav
       - CLAMAV_PORT=3310
-      - CLAMAV_TIMEOUT=10000
+      - CLAMAV_TIMEOUT=300000
     depends_on:
       clamav:
         condition: service_started

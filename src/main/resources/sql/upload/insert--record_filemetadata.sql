@@ -10,12 +10,10 @@ ins_game_file_cte AS
     INSERT INTO wc01.game_file
 	(game_profile_id,
 	 file_name,
- 	 file_version,
  	 platform_id,
  	 file_size)
     SELECT
         id,
-        ?,
         ?,
         ?,
         ?

@@ -3,12 +3,14 @@ package com.warpedcitadel.filemanagementservice.fileupload;
 
 import com.warpedcitadel.filemanagementservice.filetransfer.FileTransferService;
 import com.warpedcitadel.filemanagementservice.filetransfer.dto.RequestData;
-import com.warpedcitadel.filemanagementservice.fileupload.dto.FileUploadDto;
+import com.warpedcitadel.filemanagementservice.fileupload.dto.GameFileDetails;
+import com.warpedcitadel.filemanagementservice.fileupload.dto.GameFileDto;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDetails;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDto;
 import com.warpedcitadel.filemanagementservice.fileupload.model.FileMetaDataModel;
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageFileTransferModel;
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageMetaDataModel;
+import com.warpedcitadel.filemanagementservice.fileupload.status.FileStatus;
 import com.warpedcitadel.filemanagementservice.fileupload.validation.FileValidation;
 import com.warpedcitadel.filemanagementservice.util.VirusScanService;
 import org.slf4j.Logger;
@@ -43,22 +45,13 @@ public class FileUploadService {
 
 
     public FileUploadService(S3Client s3Client, FileUploadRepository repository,
-                             FileValidation fileValidation, VirusScanService clamAVClient, FileTransferService fileTransferService) {
-
+                             FileValidation fileValidation, VirusScanService clamAVClient,
+                             FileTransferService fileTransferService) {
         this.s3Client = s3Client;
         this.repository = repository;
         this.fileValidation = fileValidation;
         this.clamAVClient = clamAVClient;
         this.fileTransferService = fileTransferService;
-    }
-
-
-    public void uploadFileToS3(MultipartFile file, FileUploadDto fileUploadDto) throws IOException {
-        recordFileMetaData(file, fileUploadDto);
-
-        String prefix = "games/" + fileUploadDto.gameProfileUUID() + "/files/" + file.getOriginalFilename();
-
-        uploadFileS3(file, prefix);
     }
 
 
@@ -90,9 +83,20 @@ public class FileUploadService {
                 }
             }
         } catch (IOException exception) {
-            log.error("Failed to upload image file: {}", file.getOriginalFilename());
+            log.error("Failed to upload image file: ({})", file.getOriginalFilename());
             throw exception;
         }
+    }
+
+
+    public ImageMetaDataModel recordImageMetaDataToStaging(MultipartFile file, ImageMetaDataModel imageDetails) {
+        String fileSize = formatBytes(file);
+        ImageMetaDataModel imageMetaData = new ImageMetaDataModel(
+                imageDetails.getAppUserUUID(),
+                updateFileName(file.getOriginalFilename()),
+                fileSize
+        );
+        return repository.recordImageMetaDataToStaging(imageMetaData);
     }
 
 
@@ -138,44 +142,9 @@ public class FileUploadService {
                         gameImages.size() ,fileDetails.getFirst().gameProfileUUID());
             }
         } catch (IOException exception) {
-            log.error("Failed to upload game images for game profile ID: {}", fileDetails.getFirst().gameProfileUUID());
+            log.error("Failed to upload game images for game profile ID: ({})", fileDetails.getFirst().gameProfileUUID());
             throw exception;
         }
-    }
-
-
-    private String recordFileMetaData(MultipartFile file, FileUploadDto fileUploadDto) {
-
-        if (!fileValidation.isValidFile(file, new String[]{".zip"}, 1000000000)) return "";
-
-        String fileSize = formatBytes(file);
-
-        FileMetaDataModel metaData = new FileMetaDataModel(
-                fileUploadDto.gameProfileUUID(),
-                file.getOriginalFilename(),
-                fileUploadDto.fileVersion(),
-                fileUploadDto.platformOS(),
-                fileSize
-        );
-
-        return repository.recordFileMetaData(metaData);
-    }
-
-
-    public ImageMetaDataModel recordImageMetaDataToStaging(MultipartFile file, ImageMetaDataModel imageDetails) {
-        if (!fileValidation.isValidFile(file, new String[]{".jpeg", ".png", ".jpg"}, 2000000)) {
-
-            throw new IllegalArgumentException("Wrong file format: " + file.getOriginalFilename());
-        };
-        String fileSize = formatBytes(file);
-
-        ImageMetaDataModel imageMetaData = new ImageMetaDataModel(
-                imageDetails.getAppUserUUID(),
-                updateFileName(file.getOriginalFilename()),
-                fileSize
-        );
-
-        return repository.recordImageMetaDataToStaging(imageMetaData);
     }
 
 
@@ -191,7 +160,65 @@ public class FileUploadService {
             );
             gameImageModelList.add(imageMetaDataModel);
         }
-        return repository.recordGameImageToStaging(gameImageModelList);
+        return repository.recordGameImagesToStaging(gameImageModelList);
+    }
+
+
+    public void uploadFilesToS3(List<MultipartFile> files, List<GameFileDetails> fileDetails) throws IOException {
+        try {
+            if (files.size() != fileDetails.size()) {
+                throw new IllegalArgumentException(
+                        "Each file must have corresponding file details.");
+            }
+            List<GameFileDto> fileMetaData = new ArrayList<>();
+            for (int i = 0; files.size() > i; i++) {
+                if (!fileValidation.isValidFile(files.get(i),
+                        new String[]{".zip"}, 1000000000)) {
+                    throw new IllegalArgumentException("Invalid file type: " + files.get(i).getContentType());
+                }
+                fileMetaData.add(new GameFileDto(files.get(i), fileDetails.get(i)));
+            }
+            List<String> fileNames = recordFilesToStaging(fileMetaData);
+            List<String> prefixList = new ArrayList<>();
+            for (int i = 0; files.size() > i; i++) {
+                String prefix = "games/" + fileDetails.get(i).gameProfileUUID() + "/files/" + fileNames.get(i);
+                uploadFileS3(files.get(i), prefix);
+                prefixList.add(prefix);
+                boolean result = clamAVClient.processFile(files.get(i));
+                if (!result) {
+                    for (int j = 0; prefixList.size() > j; j++) {
+                        deleteS3Objects(validName, prefixList.get(j));
+                    }
+                    repository.deleteStagingGameFiles(fileDetails.getFirst().gameProfileUUID());
+                    throw new IOException("Malformed file detected");
+                }
+            }
+            if (files.size() == fileNames.size()) {
+                log.info("A total of ({}) files scanned successfully for game profile ID: ({})",
+                        fileNames.size() , fileDetails.getFirst().gameProfileUUID());
+                repository.updateFileStatus(fileDetails.getFirst().gameProfileUUID(), FileStatus.REVIEW.getCode());
+            }
+        } catch(IOException exception) {
+            log.error("Failed to upload game files for game profile ID: ({}), Reason: {}",
+                    fileDetails.getFirst().gameProfileUUID(), exception.toString());
+            throw exception;
+        }
+    }
+
+
+    private List<String> recordFilesToStaging(List<GameFileDto> gameFileDto) {
+        List<FileMetaDataModel> gameFileModelList = new ArrayList<>();
+        for (int i = 0; gameFileDto.size() > i; i++) {
+            String fileSize = formatBytes(gameFileDto.get(i).file());
+            FileMetaDataModel fileDetails = new FileMetaDataModel(
+                    gameFileDto.get(i).fileDetails().gameProfileUUID(),
+                    gameFileDto.get(i).file().getOriginalFilename(),
+                    gameFileDto.get(i).fileDetails().platformOS(),
+                    fileSize
+            );
+            gameFileModelList.add(fileDetails);
+        }
+        return repository.recordFileToStaging(gameFileModelList);
     }
 
 
@@ -202,11 +229,9 @@ public class FileUploadService {
                             .key(key)
                             .build(),
                     RequestBody.fromBytes(file.getBytes()));
-
             s3Client.utilities().getUrl(builder -> builder.bucket(validName)
                     .key(key)).toExternalForm();
         } catch (IOException failedUploadException) {
-
             throw new IOException("Failed to upload file", failedUploadException);
         }
     }
@@ -214,32 +239,25 @@ public class FileUploadService {
 
 //    ### HELPER FUNCTIONS ###
     private void deleteS3Objects(String bucketName, String prefix) {
-
         String continuationToken = null;
         do {
-
             ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
                     .bucket(bucketName)
                     .prefix(prefix)
                     .continuationToken(continuationToken)
                     .build();
-
             ListObjectsV2Response objectList = s3Client.listObjectsV2(listRequest);
             List<ObjectIdentifier> deletionList = new ArrayList<>();
-
             for (S3Object s3Object : objectList.contents()) {
                 deletionList.add(ObjectIdentifier.builder().key(s3Object.key()).build());
             }
-
             if (!deletionList.isEmpty()) {
                 DeleteObjectsRequest deleteS3Objects = DeleteObjectsRequest.builder()
                         .bucket(bucketName)
                         .delete(builder -> builder.objects(deletionList))
                         .build();
-
                 s3Client.deleteObjects(deleteS3Objects);
             }
-
             continuationToken = objectList.nextContinuationToken();
         } while (continuationToken != null);
     }
@@ -247,7 +265,6 @@ public class FileUploadService {
 
     private String formatBytes(MultipartFile file) {
         long sizeInBytes = file.getSize();
-
         if (sizeInBytes < 1024) {
             return sizeInBytes + "B";
         } else {

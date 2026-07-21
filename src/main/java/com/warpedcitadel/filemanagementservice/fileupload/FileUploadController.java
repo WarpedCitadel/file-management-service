@@ -1,7 +1,7 @@
 package com.warpedcitadel.filemanagementservice.fileupload;
 
 
-import com.warpedcitadel.filemanagementservice.fileupload.dto.FileUploadDto;
+import com.warpedcitadel.filemanagementservice.fileupload.dto.GameFileDetails;
 import com.warpedcitadel.filemanagementservice.fileupload.dto.GameImageDetails;
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageMetaDataModel;
 import com.warpedcitadel.filemanagementservice.payload.ApiResponse;
@@ -32,11 +32,10 @@ public class FileUploadController {
 
 
     @PostMapping(value = "/upload/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<String>> uploadGameFile(@RequestPart("file") MultipartFile file,
-                                                              @RequestPart("fileDetails") FileUploadDto fileUploadDto,
+    public ResponseEntity<ApiResponse<String>> uploadGameFile(@RequestPart("file") List<MultipartFile> file,
+                                                              @RequestPart("fileDetails") List<GameFileDetails> gameFileDetails,
                                                               WebRequest request) throws IOException {
-
-        fileUploadService.uploadFileToS3(file, fileUploadDto);
+        fileUploadService.uploadFilesToS3(file, gameFileDetails);
         ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.CREATED.value(),
                 "Uploaded game file",
                 request.getDescription(false).replace("uri=", ""),
@@ -49,7 +48,6 @@ public class FileUploadController {
     public ResponseEntity<ApiResponse<String>> uploadProfileImage(@RequestPart("file") MultipartFile file,
                                                                   @RequestPart("fileDetails") ImageMetaDataModel fileDetails,
                                                                   WebRequest request) throws IOException {
-
         fileUploadService.uploadImageToS3(file, fileDetails);
         ApiResponse<String> fileData = new ApiResponse<>("Update", HttpStatus.CREATED.value(),
                 "Changed profile image",
@@ -63,7 +61,6 @@ public class FileUploadController {
     public ResponseEntity<ApiResponse<String>> uploadProfileImage(@RequestPart("file") List<MultipartFile> file,
                                                                   @RequestPart("details") List<GameImageDetails> details,
                                                                   WebRequest request) throws IOException {
-
         fileUploadService.uploadGameImageToS3(file, details);
         ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.CREATED.value(),
                 "Uploaded game profile images",

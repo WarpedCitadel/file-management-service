@@ -30,19 +30,15 @@ public class VirusScanService {
 
 
     private String virusScan(MultipartFile file) throws IOException {
-
         InputStream inputStream = file.getInputStream();
         long start = System.currentTimeMillis();
-
         try (Socket socket = new Socket(host, port)) {
-
             socket.setSoTimeout(timeout);
             InputStream in = socket.getInputStream();
             OutputStream out = socket.getOutputStream();
             out.write("zINSTREAM\0".getBytes(StandardCharsets.US_ASCII));
             byte[] buffer = new byte[8192];
             int read;
-
             while ((read = inputStream.read(buffer)) != -1) {
                 byte[] size = ByteBuffer.allocate(4)
                         .putInt(read)
@@ -50,37 +46,35 @@ public class VirusScanService {
                 out.write(size);
                 out.write(buffer, 0, read);
             }
-
             out.write(new byte[] {0,0,0,0});
             out.flush();
             String response = new String(in.readAllBytes(), StandardCharsets.US_ASCII);
             long elapsed = System.currentTimeMillis() - start;
-
-            log.info("Scanned {} ({} bytes) in {} ms - result: {}",
+            log.info("Scanned ({}) ({} bytes) in ({}) ms - result: ({})",
                     file.getOriginalFilename(),
                     file.getSize(),
                     elapsed,
                     response);
-
             return response;
         }
     }
 
-    public boolean processFile(MultipartFile file) throws IOException {
 
+    public boolean processFile(MultipartFile file) throws IOException {
         try {
             String result = virusScan(file);
             if (result.contains("OK")) {
                 return true;
             } else if (result.contains("FOUND")) {
-                log.warn("Detected malformed file: {}", file.getOriginalFilename());
+                log.warn("Detected malformed file: ({})", file.getOriginalFilename());
                 return false;
-            } else {
-                log.warn("Error processing file: {}", file.getOriginalFilename());
+            } else if (result.contains("ERROR")) {
+                log.warn("Error processing file: ({})", file.getOriginalFilename());
                 return false;
             }
         } catch (IOException exception) {
             throw exception;
         }
+        return false;
     }
 }

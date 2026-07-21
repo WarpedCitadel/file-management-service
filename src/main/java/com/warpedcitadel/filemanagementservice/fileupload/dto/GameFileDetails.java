@@ -1,7 +1,6 @@
 package com.warpedcitadel.filemanagementservice.fileupload.dto;
 
-public record FileUploadDto(
+public record GameFileDetails(
         String gameProfileUUID,
-        String fileVersion,
         int platformOS
 ) {}
