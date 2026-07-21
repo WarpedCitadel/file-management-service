@@ -30,7 +30,7 @@ public class FileTransferController {
 
         fileTransferService.extractZip(requestData);
         ApiResponse<String> fileData = new ApiResponse<>("Transfer", HttpStatus.OK.value(),
-                "Transferred file to S3",
+                "Transfer file to S3 successful",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.OK);
@@ -38,12 +38,12 @@ public class FileTransferController {
 
 
     @PostMapping("/transferGameFile")
-    public ResponseEntity<ApiResponse<String>> transferGameFileToS3(@RequestBody List<RequestData> requestData,
+    public ResponseEntity<ApiResponse<String>> transferGameFilesToS3(@RequestBody List<RequestData> requestData,
                                                                                     WebRequest request) {
 
-        fileTransferService.transferGameFileToS3(requestData);
+        fileTransferService.transferGameFilesToS3(requestData);
         ApiResponse<String> fileData = new ApiResponse<>("Transfer", HttpStatus.OK.value(),
-                "Transferred files to S3",
+                "Transfer files to S3 successful",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.OK);
@@ -51,12 +51,12 @@ public class FileTransferController {
 
 
     @PostMapping("/transferGameImage")
-    public ResponseEntity<ApiResponse<String>> transferGameImageToS3(@RequestBody List<RequestData> requestData,
+    public ResponseEntity<ApiResponse<String>> transferGameImagesToS3(@RequestBody List<RequestData> requestData,
                                                                                     WebRequest request) {
 
         fileTransferService.transferGameImagesToS3(requestData);
         ApiResponse<String> fileData = new ApiResponse<>("Transfer", HttpStatus.OK.value(),
-                "Transferred images to S3",
+                "Transferred game images to S3 successful",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.OK);
@@ -69,7 +69,7 @@ public class FileTransferController {
 
         fileTransferService.transferProfileImageToS3(requestData);
         ApiResponse<String> fileData = new ApiResponse<>("Transfer", HttpStatus.OK.value(),
-                "Transferred image to S3",
+                "Transfer profile image to S3 successful",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.OK);

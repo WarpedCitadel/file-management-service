@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -19,11 +20,11 @@ public class GlobalExceptionHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(IOException.class)
-    public ApiErrorResponse handleFailedUploadExceptions(IOException ioException, WebRequest request){
+    public ApiErrorResponse IOExceptions(IOException ioException, WebRequest request){
         Map<String, String> errors = new HashMap<>();
         errors.put("Message", ioException.getMessage());
         return new ApiErrorResponse(
-                "Failed upload",
+                "File error",
                 HttpStatus.BAD_REQUEST.value(),
                 errors,
                 request.getDescription(false).replace("uri=", ""),
@@ -32,28 +33,59 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(SQLException.class)
-    public ApiErrorResponse handleCanNotFindObjectExceptions(SQLException sqlException, WebRequest request){
+    public ApiErrorResponse SQLExceptions(SQLException sqlException, WebRequest request){
         Map<String, String> errors = new HashMap<>();
         errors.put("Message", sqlException.getMessage());
         return new ApiErrorResponse(
-                "Failed upload",
-                HttpStatus.NOT_FOUND.value(),
+                "Database error",
+                HttpStatus.BAD_REQUEST.value(),
                 errors,
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC())
         );
     }
 
+
     @ResponseStatus(HttpStatus.CONTENT_TOO_LARGE)
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ApiErrorResponse maxUploadSizeExceededException(MaxUploadSizeExceededException MUSEException, WebRequest request){
+    public ApiErrorResponse maxUploadSizeExceededException(MaxUploadSizeExceededException exception, WebRequest request){
         Map<String, String> errors = new HashMap<>();
-        errors.put("Message", MUSEException.getMessage());
+        errors.put("Message", exception.getMessage());
         return new ApiErrorResponse(
                 "File content too large",
                 HttpStatus.CONTENT_TOO_LARGE.value(),
+                errors,
+                request.getDescription(false).replace("uri=", ""),
+                Instant.now(Clock.systemUTC())
+        );
+    }
+
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ApiErrorResponse illegalArgumentException(IllegalArgumentException exception, WebRequest request){
+        Map<String, String> errors = new HashMap<>();
+        errors.put("Message", exception.getMessage());
+        return new ApiErrorResponse(
+                "Invalid input",
+                HttpStatus.BAD_REQUEST.value(),
+                errors,
+                request.getDescription(false).replace("uri=", ""),
+                Instant.now(Clock.systemUTC())
+        );
+    }
+
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(S3Exception.class)
+    public ApiErrorResponse S3Exception(S3Exception exception, WebRequest request){
+        Map<String, String> errors = new HashMap<>();
+        errors.put("Message", exception.getMessage());
+        return new ApiErrorResponse(
+                "Object storage failure",
+                HttpStatus.BAD_REQUEST.value(),
                 errors,
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC())

@@ -37,20 +37,7 @@ public class FileUploadController {
                                                               WebRequest request) throws IOException {
         fileUploadService.uploadFilesToS3(file, gameFileDetails);
         ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.CREATED.value(),
-                "Uploaded game file",
-                request.getDescription(false).replace("uri=", ""),
-                Instant.now(Clock.systemUTC()));
-        return new ResponseEntity<>(fileData, HttpStatus.CREATED);
-    }
-
-
-    @PostMapping(value = "/upload/profileImage", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<String>> uploadProfileImage(@RequestPart("file") MultipartFile file,
-                                                                  @RequestPart("fileDetails") ImageMetaDataModel fileDetails,
-                                                                  WebRequest request) throws IOException {
-        fileUploadService.uploadImageToS3(file, fileDetails);
-        ApiResponse<String> fileData = new ApiResponse<>("Update", HttpStatus.CREATED.value(),
-                "Changed profile image",
+                "Successfully uploaded game files",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.CREATED);
@@ -63,7 +50,20 @@ public class FileUploadController {
                                                                   WebRequest request) throws IOException {
         fileUploadService.uploadGameImageToS3(file, details);
         ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.CREATED.value(),
-                "Uploaded game profile images",
+                "Successfully uploaded game profile images",
+                request.getDescription(false).replace("uri=", ""),
+                Instant.now(Clock.systemUTC()));
+        return new ResponseEntity<>(fileData, HttpStatus.CREATED);
+    }
+
+
+    @PostMapping(value = "/upload/profileImage", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<String>> uploadProfileImage(@RequestPart("file") MultipartFile file,
+                                                                  @RequestPart("fileDetails") ImageMetaDataModel fileDetails,
+                                                                  WebRequest request) throws IOException {
+        fileUploadService.uploadImageToS3(file, fileDetails);
+        ApiResponse<String> fileData = new ApiResponse<>("Upload", HttpStatus.CREATED.value(),
+                "Update on profile image successful",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(fileData, HttpStatus.CREATED);

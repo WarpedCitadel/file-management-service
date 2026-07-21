@@ -23,10 +23,8 @@ public class FileManagementController {
     }
 
     @GetMapping("/getFiles/{uuid}")
-    public ResponseEntity<ApiResponse<FileDataDto>> getGameFiles(@PathVariable String uuid,
-                                                                                WebRequest request) {
-
-         FileDataDto fileList = fileManagementService.getGameFiles(uuid);
+    public ResponseEntity<ApiResponse<FileDataDto>> getGameFiles(@PathVariable String uuid, WebRequest request) {
+        FileDataDto fileList = fileManagementService.getGameFiles(uuid);
         ApiResponse<FileDataDto> gameProfileDetails = new ApiResponse<>("Game File List",
                 HttpStatus.OK.value(),
                 fileList,
@@ -37,9 +35,7 @@ public class FileManagementController {
 
 
     @PutMapping("/updateFileStatus")
-    public ResponseEntity<ApiResponse<FileRequestDto>> updateFileStatus(@RequestBody FileRequestDto fileRequestDto,
-                                                                    WebRequest request) {
-
+    public ResponseEntity<ApiResponse<FileRequestDto>> updateFileStatus(@RequestBody FileRequestDto fileRequestDto, WebRequest request) {
         FileRequestDto fileStatus = fileManagementService.updateFileStatus(fileRequestDto);
         ApiResponse<FileRequestDto> gameProfileDetails = new ApiResponse<>("File Status Updated",
                 HttpStatus.OK.value(),
@@ -52,7 +48,6 @@ public class FileManagementController {
 
     @GetMapping("/getStatusTypes")
     public ResponseEntity<ApiResponse<StatusTypesDto>> getStatusTypes(WebRequest request) {
-
         StatusTypesDto statusTypes = fileManagementService.getStatusTypes();
         ApiResponse<StatusTypesDto> response = new ApiResponse<>("Status Types",
                 HttpStatus.OK.value(),

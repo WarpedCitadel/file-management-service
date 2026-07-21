@@ -22,39 +22,30 @@ public class FileManagementService {
 
 
     public FileDataDto getGameFiles(String gameProfileUUID) {
-
         FileRequestModel fileRequestModel = new FileRequestModel(
                 gameProfileUUID
         );
-
         List<FileDataModel> fileList = fileManagementRepository.getGameFiles(fileRequestModel);
-
         return new FileDataDto(fileList);
     }
 
 
     public FileRequestDto updateFileStatus(FileRequestDto fileRequestDto){
-
         FileRequestModel fileRequestModel = new FileRequestModel(
                 fileRequestDto.gameProfileUUID(),
                 fileRequestDto.fileStatus()
         );
-
         int fileStatus = fileManagementRepository.updateFileStatus(fileRequestModel);
-
         if (fileStatus == -1) {
             throw new RuntimeException("Failed to update profile status");
         }
-
         FileRequestDto fileRequest = new FileRequestDto(fileRequestDto.gameProfileUUID(), fileStatus);
         return fileRequest;
     }
 
 
-    protected StatusTypesDto getStatusTypes() {
-
+    public StatusTypesDto getStatusTypes() {
         HashMap<Integer, String> statusTypes = fileManagementRepository.getStatusTypes();
-
         return new StatusTypesDto(
                 statusTypes
         );

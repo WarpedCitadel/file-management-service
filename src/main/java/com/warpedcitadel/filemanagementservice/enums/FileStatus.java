@@ -1,4 +1,4 @@
-package com.warpedcitadel.filemanagementservice.fileupload.status;
+package com.warpedcitadel.filemanagementservice.enums;
 
 public enum FileStatus {
 
