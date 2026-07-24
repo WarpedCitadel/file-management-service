@@ -1,52 +1,71 @@
 package com.warpedcitadel.filemanagementservice.filemanagement.model;
 
+import java.util.UUID;
+
 public class FileDataModel {
 
+    long appUserID;
+    UUID gameProfileUUID;
+    String title;
+    UUID fileUUID;
     String fileName;
-    String fileVersion;
     String fileSize;
-    int platformOS;
-    int fileStatus;
-    String modifiedDtm;
+    Integer platformOS;
+    Integer fileStatus;
     String createdDtm;
+
 
     public FileDataModel() {
 
     }
 
-    public FileDataModel(String fileName, String fileVersion, String fileSize, int platformOS, int fileStatus, String modifiedDtm, String createdDtm) {
+
+    public FileDataModel(long appUserID, UUID gameProfileUUID, String title,
+                         UUID fileUUID, String fileName, String fileSize,
+                         Integer platformOS, Integer fileStatus, String createdDtm) {
+
+        this.appUserID = appUserID;
+        this.gameProfileUUID = gameProfileUUID;
+        this.title = title;
+        this.fileUUID = fileUUID;
         this.fileName = fileName;
-        this.fileVersion = fileVersion;
         this.fileSize = fileSize;
         this.platformOS = platformOS;
         this.fileStatus = fileStatus;
-        this.modifiedDtm = modifiedDtm;
         this.createdDtm = createdDtm;
     }
 
 
-    public String getFileName() {
-        return fileName;
+    public long getAppUserID() {
+        return appUserID;
     }
 
-    public String getFileVersion() {
-        return fileVersion;
+    public UUID getGameProfileUUID() {
+        return gameProfileUUID;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public UUID getFileUUID() {
+        return fileUUID;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 
     public String getFileSize() {
         return fileSize;
     }
 
-    public int getPlatformOS() {
+    public Integer getPlatformOS() {
         return platformOS;
     }
 
-    public int getFileStatus() {
+    public Integer getFileStatus() {
         return fileStatus;
-    }
-
-    public String getModifiedDtm() {
-        return modifiedDtm;
     }
 
     public String getCreatedDtm() {
@@ -54,44 +73,17 @@ public class FileDataModel {
     }
 
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    public void setFileVersion(String fileVersion) {
-        this.fileVersion = fileVersion;
-    }
-
-    public void setFileSize(String fileSize) {
-        this.fileSize = fileSize;
-    }
-
-    public void setPlatformOS(int platformOS) {
-        this.platformOS = platformOS;
-    }
-
-    public void setFileStatus(int fileStatus) {
-        this.fileStatus = fileStatus;
-    }
-
-    public void setModifiedDtm(String modifiedDtm) {
-        this.modifiedDtm = modifiedDtm;
-    }
-
-    public void setCreatedDtm(String createdDtm) {
-        this.createdDtm = createdDtm;
-    }
-
-
     @Override
     public String toString() {
         return "FileDataModel{" +
-                "fileName='" + fileName + '\'' +
-                ", fileVersion='" + fileVersion + '\'' +
+                "appUserID=" + appUserID +
+                ", gameProfileUUID=" + gameProfileUUID +
+                ", title='" + title + '\'' +
+                ", fileUUID=" + fileUUID +
+                ", fileName='" + fileName + '\'' +
                 ", fileSize='" + fileSize + '\'' +
-                ", platformOS='" + platformOS + '\'' +
+                ", platformOS=" + platformOS +
                 ", fileStatus=" + fileStatus +
-                ", modifiedDtm='" + modifiedDtm + '\'' +
                 ", createdDtm='" + createdDtm + '\'' +
                 '}';
     }

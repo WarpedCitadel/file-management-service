@@ -71,10 +71,10 @@ public class FileUploadService {
             List<GameFileDto> fileMetaData = new ArrayList<>();
             for (int i = 0; files.size() > i; i++) {
                 if (!fileValidation.isValidFile(files.get(i),
-                        FileType.FILE_TYPE.getFileType(), FileSize.FILE_SIZE.getByteLimit())) {
+                        FileType.FILE_TYPE.getAcceptedFileTypes(), FileSize.FILE_SIZE.getByteLimit())) {
                     throw new IllegalArgumentException("Invalid file type: " + files.get(i).getContentType() +
                             " for file " + files.get(i).getOriginalFilename() + ". Please provide a " +
-                            Arrays.toString(FileType.FILE_TYPE.getFileType()) + " file or reduce file byte size");
+                            Arrays.toString(FileType.FILE_TYPE.getAcceptedFileTypes()) + " file or reduce file byte size");
                 }
                 fileMetaData.add(new GameFileDto(files.get(i), fileDetails.get(i)));
             }
@@ -153,10 +153,10 @@ public class FileUploadService {
             List<GameImageDto> imageMetaData = new ArrayList<>();
             for (int i = 0; files.size() > i; i++) {
                 if (!fileValidation.isValidFile(files.get(i),
-                        FileType.IMAGE_TYPE.getFileType(), FileSize.IMAGE_SIZE.getByteLimit())) {
+                        FileType.IMAGE_TYPE.getAcceptedFileTypes(), FileSize.IMAGE_SIZE.getByteLimit())) {
                     throw new IllegalArgumentException("Invalid image type: " + files.get(i).getContentType() +
                             " for file " + files.get(i).getOriginalFilename() +
-                            ". Please provide a " + Arrays.toString(FileType.IMAGE_TYPE.getFileType()) + " file or reduce file byte size");
+                            ". Please provide a " + Arrays.toString(FileType.IMAGE_TYPE.getAcceptedFileTypes()) + " file or reduce file byte size");
                 }
                 imageMetaData.add(new GameImageDto(files.get(i), fileDetails.get(i)));
             }
@@ -216,10 +216,10 @@ public class FileUploadService {
         try {
             long start = System.currentTimeMillis();
             if (!fileValidation.isValidFile(file,
-                    FileType.IMAGE_TYPE.getFileType(), FileSize.IMAGE_SIZE.getByteLimit())) {
+                    FileType.IMAGE_TYPE.getAcceptedFileTypes(), FileSize.IMAGE_SIZE.getByteLimit())) {
                 throw new IllegalArgumentException("Invalid content type: " + file.getContentType() +
                         " for file " + file.getOriginalFilename() +
-                        ". Please provide a " + Arrays.toString(FileType.IMAGE_TYPE.getFileType()) +
+                        ". Please provide a " + Arrays.toString(FileType.IMAGE_TYPE.getAcceptedFileTypes()) +
                         " file or reduce file byte size");
             }
             ImageMetaDataModel image = recordImageMetaDataToStaging(file, fileDetails);

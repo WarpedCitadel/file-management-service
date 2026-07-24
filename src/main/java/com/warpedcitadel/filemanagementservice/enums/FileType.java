@@ -11,7 +11,7 @@ public enum FileType {
         this.fileType = fileType;
     }
 
-    public String[] getFileType() {
+    public String[] getAcceptedFileTypes() {
         return fileType;
     }
 }

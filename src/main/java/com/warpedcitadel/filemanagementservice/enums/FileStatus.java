@@ -27,10 +27,15 @@ public enum FileStatus {
         return description;
     }
 
+
     public static String getStatusByID(int statusID) {
         for (FileStatus status : FileStatus.values()) {
             if (status.code == statusID) {
                 return status.description;
+            } else {
+                if (statusID == -1) {
+                    return "null";
+                }
             }
         }
         throw new IllegalArgumentException("Unknown code: " + statusID);

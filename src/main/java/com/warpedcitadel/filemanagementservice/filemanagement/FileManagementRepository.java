@@ -1,8 +1,8 @@
 package com.warpedcitadel.filemanagementservice.filemanagement;
 
+import com.warpedcitadel.filemanagementservice.enums.FileStatus;
 import com.warpedcitadel.filemanagementservice.filemanagement.model.FileDataModel;
 import com.warpedcitadel.filemanagementservice.filemanagement.model.FileRequestModel;
-import com.warpedcitadel.filemanagementservice.enums.FileStatus;
 import com.warpedcitadel.filemanagementservice.util.SQLFileReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,52 +13,60 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class FileManagementRepository {
 
-    private final DataSource wcDatabase;
+    private final DataSource database;
     private static final Logger log = LoggerFactory.getLogger(FileManagementRepository.class);
     SQLFileReader loadSQL = new SQLFileReader();
 
-    public FileManagementRepository(DataSource wcDatabase) {
-        this.wcDatabase = wcDatabase;
+    public FileManagementRepository(DataSource database) {
+        this.database = database;
     }
 
 
-    public List<FileDataModel> getGameFiles(FileRequestModel fileRequestModel) {
-        String selectSQL = loadSQL.loadSQL("/filedata/select--get_file_list.sql");
+    public List<FileDataModel> getFiles(List<Object> attributesList) {
+        String selectSQL = loadSQL.loadSQL("/management/select--get_file_list.sql");
         List<FileDataModel> fileList = new ArrayList<>();
-        try (Connection connection = wcDatabase.getConnection();
+        try (Connection connection = database.getConnection();
              PreparedStatement selectStatement = connection.prepareStatement(selectSQL)) {
-            selectStatement.setString(1, fileRequestModel.getGameProfileUUID());
+            int request;
+            for (request = 0; attributesList.size() > request; request++) {
+                if (attributesList.get(request) != null && !attributesList.get(request).equals(-1)) {
+                    selectStatement.setObject(request + 1, attributesList.get(request));
+                } else {
+                    selectStatement.setObject(request + 1, null);
+                }
+            }
             ResultSet resultSet = selectStatement.executeQuery();
             while (resultSet.next()) {
-                FileDataModel file = new FileDataModel();
-                file.setFileName(resultSet.getString("file_name"));
-                file.setFileVersion(resultSet.getString("file_version"));
-                file.setFileSize(resultSet.getString("file_size"));
-                file.setPlatformOS(resultSet.getInt("platform_id"));
-                file.setFileStatus(resultSet.getInt("status_type_id"));
-                file.setModifiedDtm(resultSet.getString("modified_dtm"));
-                file.setCreatedDtm(resultSet.getString("created_dtm"));
-                fileList.add(file);
+                FileDataModel fileDataModel = new FileDataModel(
+                        resultSet.getLong("app_user_id"),
+                        (UUID) resultSet.getObject("game_profile_uuid"),
+                        resultSet.getString("title"),
+                        (UUID) resultSet.getObject("file_uuid"),
+                        resultSet.getString("file_name"),
+                        resultSet.getString("file_size"),
+                        resultSet.getInt("platform_id"),
+                        resultSet.getInt("status_type_id"),
+                        resultSet.getString("created_dtm")
+                );
+                fileList.add(fileDataModel);
             }
         } catch (SQLException exception) {
-            log.error("Failed to retrieve game files for game profile ID: ({})",
-                    fileRequestModel.getGameProfileUUID());
-            throw new RuntimeException("Failed to retrieve game files");
+            log.error("Failed to retrieve list of files Reason: ({})", exception.toString());
+            throw new RuntimeException("Failed to retrieve list of files");
         }
-        log.info("Retrieved ({}) game files for game profile ID: ({})",
-                fileList.size(), fileRequestModel.getGameProfileUUID());
         return fileList;
     }
 
-    
+
     public int updateFileStatus(FileRequestModel fileRequestModel) {
-        String updateSQL = loadSQL.loadSQL("/filedata/update--update_file_status.sql");
+        String updateSQL = loadSQL.loadSQL("/management/update--update_file_status.sql");
         int fileStatus = -1;
-        try (Connection connection = wcDatabase.getConnection();
+        try (Connection connection = database.getConnection();
              PreparedStatement updateStatement = connection.prepareStatement(updateSQL, Statement.RETURN_GENERATED_KEYS)) {
             updateStatement.setString(1, fileRequestModel.getGameProfileUUID());
             updateStatement.setInt(2, fileRequestModel.getGameStatus());
@@ -76,9 +84,9 @@ public class FileManagementRepository {
 
 
     public HashMap<Integer, String> getStatusTypes() {
-        String selectSql = loadSQL.loadSQL("/filedata/select--select_file_status_types.sql");
-        HashMap<Integer, String> statusTypes = new HashMap<>(6);
-        try (Connection connection = wcDatabase.getConnection();
+        String selectSql = loadSQL.loadSQL("/management/select--select_file_status_types.sql");
+        HashMap<Integer, String> statusTypes = new HashMap<>(FileStatus.values().length);
+        try (Connection connection = database.getConnection();
              Statement selectStatement = connection.createStatement();
              ResultSet resultset = selectStatement.executeQuery(selectSql)) {
             while (resultset.next()) {

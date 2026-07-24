@@ -2,8 +2,10 @@ package com.warpedcitadel.filemanagementservice.filemanagement;
 
 import com.warpedcitadel.filemanagementservice.filemanagement.dto.FileDataDto;
 import com.warpedcitadel.filemanagementservice.filemanagement.dto.FileRequestDto;
+import com.warpedcitadel.filemanagementservice.filemanagement.dto.SearchAttributesDto;
 import com.warpedcitadel.filemanagementservice.filemanagement.dto.StatusTypesDto;
 import com.warpedcitadel.filemanagementservice.payload.ApiResponse;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,15 +24,18 @@ public class FileManagementController {
         this.fileManagementService = fileManagementService;
     }
 
-    @GetMapping("/getFiles/{uuid}")
-    public ResponseEntity<ApiResponse<FileDataDto>> getGameFiles(@PathVariable String uuid, WebRequest request) {
-        FileDataDto fileList = fileManagementService.getGameFiles(uuid);
-        ApiResponse<FileDataDto> gameProfileDetails = new ApiResponse<>("Game File List",
+
+    @GetMapping("/getFiles")
+    public ResponseEntity<ApiResponse<FileDataDto>> getFiles(SearchAttributesDto attributes,
+                                                                          Pageable pageable, WebRequest request) {
+
+        FileDataDto files = fileManagementService.getFiles(pageable, attributes);
+        ApiResponse<FileDataDto> response = new ApiResponse<>("File management list",
                 HttpStatus.OK.value(),
-                fileList,
+                files,
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
-        return new ResponseEntity<>(gameProfileDetails, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 
