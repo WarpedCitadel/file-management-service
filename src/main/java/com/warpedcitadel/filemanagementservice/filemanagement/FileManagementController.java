@@ -1,7 +1,7 @@
 package com.warpedcitadel.filemanagementservice.filemanagement;
 
 import com.warpedcitadel.filemanagementservice.filemanagement.dto.FileDataDto;
-import com.warpedcitadel.filemanagementservice.filemanagement.dto.FileRequestDto;
+import com.warpedcitadel.filemanagementservice.filemanagement.dto.FileDto;
 import com.warpedcitadel.filemanagementservice.filemanagement.dto.SearchAttributesDto;
 import com.warpedcitadel.filemanagementservice.filemanagement.dto.StatusTypesDto;
 import com.warpedcitadel.filemanagementservice.payload.ApiResponse;
@@ -13,6 +13,7 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "/api/file", version = "1.0")
@@ -40,11 +41,11 @@ public class FileManagementController {
 
 
     @PutMapping("/updateFileStatus")
-    public ResponseEntity<ApiResponse<FileRequestDto>> updateFileStatus(@RequestBody FileRequestDto fileRequestDto, WebRequest request) {
-        FileRequestDto fileStatus = fileManagementService.updateFileStatus(fileRequestDto);
-        ApiResponse<FileRequestDto> gameProfileDetails = new ApiResponse<>("File Status Updated",
+    public ResponseEntity<ApiResponse> updateFileStatus(@RequestBody List<FileDto> files, WebRequest request) {
+        fileManagementService.updateFileStatus(files);
+        ApiResponse<String> gameProfileDetails = new ApiResponse<>("Update",
                 HttpStatus.OK.value(),
-                fileStatus,
+                "Files Statuses Updated",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(gameProfileDetails, HttpStatus.OK);

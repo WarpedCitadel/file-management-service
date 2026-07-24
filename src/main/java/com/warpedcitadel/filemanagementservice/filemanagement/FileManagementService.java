@@ -4,7 +4,7 @@ import com.warpedcitadel.filemanagementservice.enums.FileStatus;
 import com.warpedcitadel.filemanagementservice.enums.PlatformOS;
 import com.warpedcitadel.filemanagementservice.filemanagement.dto.*;
 import com.warpedcitadel.filemanagementservice.filemanagement.model.FileDataModel;
-import com.warpedcitadel.filemanagementservice.filemanagement.model.FileRequestModel;
+import com.warpedcitadel.filemanagementservice.filemanagement.model.FileModel;
 import com.warpedcitadel.filemanagementservice.filemanagement.model.SearchAttributesModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,24 +70,23 @@ public class FileManagementService {
                         " Title: ({}) Game profile ID: ({}) Operating System: ({}) File Status: ({}) with Limit: ({}), Page: ({}) in ({}) ms",
                 fileList.size(), attributesDto.title(), attributesDto.gameProfileUUID(),
                 PlatformOS.getPlatformByID(attributesDto.platformOS()), FileStatus.getStatusByID(attributesDto.statusType()),
-                limit, pageable.getPageNumber() ,elapsed);
+                limit, pageable.getPageNumber(), elapsed);
         return new FileDataDto(filterData);
     }
 
 
-    public FileRequestDto updateFileStatus(FileRequestDto fileRequestDto){
-        FileRequestModel fileRequestModel = new FileRequestModel(
-                fileRequestDto.gameProfileUUID(),
-                fileRequestDto.fileStatus()
-        );
-        int fileStatus = fileManagementRepository.updateFileStatus(fileRequestModel);
-        if (fileStatus == -1) {
-            log.error("Failed to update file status to ({}) for game profile ID: ({})",
-                    FileStatus.getStatusByID(fileRequestModel.getGameStatus()), fileRequestModel.getGameProfileUUID());
-            throw new RuntimeException("Failed to update file status");
+    public void updateFileStatus(List<FileDto> fileList){
+        int limit = fileList.size();
+        List<FileModel> files = new ArrayList<>(limit);
+        for (int i = 0; limit > i; i++) {
+            FileModel fileModel = new FileModel(
+                    fileList.get(i).gameProfileUUID(),
+                    fileList.get(i).fileUUID(),
+                    fileList.get(i).fileStatus()
+            );
+            files.add(fileModel);
         }
-        FileRequestDto fileRequest = new FileRequestDto(fileRequestDto.gameProfileUUID(), fileStatus);
-        return fileRequest;
+        fileManagementRepository.updateFileStatus(files);
     }
 
 

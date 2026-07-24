@@ -2,7 +2,7 @@ package com.warpedcitadel.filemanagementservice.filemanagement;
 
 import com.warpedcitadel.filemanagementservice.enums.FileStatus;
 import com.warpedcitadel.filemanagementservice.filemanagement.model.FileDataModel;
-import com.warpedcitadel.filemanagementservice.filemanagement.model.FileRequestModel;
+import com.warpedcitadel.filemanagementservice.filemanagement.model.FileModel;
 import com.warpedcitadel.filemanagementservice.util.SQLFileReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,23 +63,43 @@ public class FileManagementRepository {
     }
 
 
-    public int updateFileStatus(FileRequestModel fileRequestModel) {
+    public void updateFileStatus(List<FileModel> files) {
         String updateSQL = loadSQL.loadSQL("/management/update--update_file_status.sql");
-        int fileStatus = -1;
         try (Connection connection = database.getConnection();
              PreparedStatement updateStatement = connection.prepareStatement(updateSQL, Statement.RETURN_GENERATED_KEYS)) {
-            updateStatement.setString(1, fileRequestModel.getGameProfileUUID());
-            updateStatement.setInt(2, fileRequestModel.getGameStatus());
-            ResultSet resultSet = updateStatement.executeQuery();
-            if (resultSet.next()) {
-               fileStatus = resultSet.getInt("status_type_id");
+
+            List<Object> fileUUID = new ArrayList<>();
+            List<Object> gameProfileUUID = new ArrayList<>();
+            for (int i = 0; files.size() > i; i++) {
+                fileUUID.add(files.get(i).getFileUUID());
+                gameProfileUUID.add(files.get(i).getGameProfileUUID());
             }
+            Object[] fileObjectArray = fileUUID.toArray(new Object[0]);
+            Object[] gameProfileObjectArray = gameProfileUUID.toArray(new Object[0]);
+            Array fileArray = connection.createArrayOf("uuid", fileObjectArray);
+            Array gameProfileArray = connection.createArrayOf("uuid", gameProfileObjectArray);
+
+            updateStatement.setObject(1, gameProfileArray);
+            updateStatement.setObject(2, fileArray);
+            updateStatement.setInt(3, files.getFirst().getGameStatus());
+            ResultSet resultSet = updateStatement.executeQuery();
+
+            int total = 0;
+            while (resultSet.next()) {
+                String name = resultSet.getString("file_name");
+                String UUID = resultSet.getString("file_uuid");
+                int status = resultSet.getInt("status_type_id");
+                log.info("Updated file: ({}) file ID: ({}) to ({})",
+                        name, UUID, FileStatus.getStatusByID(status));
+                total++;
+            }
+            log.info("Successfully updated a total ({}) files statuses to ({})",
+                    total, FileStatus.getStatusByID(files.getFirst().getGameStatus()));
         } catch (SQLException exception) {
-            log.error("Failed to update file status to ({}) for game profile ID: ({})",
-                    FileStatus.getStatusByID(fileRequestModel.getGameStatus()), fileRequestModel.getGameProfileUUID());
-            throw new RuntimeException("Failed to update file status");
+            log.error("Failed to update files status to ({}), Reason ({})",
+                    FileStatus.getStatusByID(files.getFirst().getGameStatus()), exception.toString());
+            throw new RuntimeException("Failed to update files statuses");
         }
-        return fileStatus;
     }
 
 

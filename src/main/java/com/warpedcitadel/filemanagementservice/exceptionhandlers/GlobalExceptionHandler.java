@@ -91,4 +91,19 @@ public class GlobalExceptionHandler {
                 Instant.now(Clock.systemUTC())
         );
     }
+
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(RuntimeException.class)
+    public ApiErrorResponse RuntimeException(Exception exception, WebRequest request){
+        Map<String, String> errors = new HashMap<>();
+        errors.put("Message", exception.getMessage());
+        return new ApiErrorResponse(
+                "Error",
+                HttpStatus.BAD_REQUEST.value(),
+                errors,
+                request.getDescription(false).replace("uri=", ""),
+                Instant.now(Clock.systemUTC())
+        );
+    }
 }
