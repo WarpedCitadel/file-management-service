@@ -1,9 +1,11 @@
 package com.warpedcitadel.filemanagementservice.fileupload.model;
 
+import java.util.UUID;
+
 public class ImageMetaDataModel {
 
-    private String fileUUID;
-    private String appUserUUID;
+    private UUID fileUUID;
+    private UUID appUserUUID;
     private String fileName;
     private String fileSize;
     private boolean isCover;
@@ -13,13 +15,13 @@ public class ImageMetaDataModel {
 
     }
 
-    public ImageMetaDataModel(String appUserUUID, String fileName, String fileSize) {
+    public ImageMetaDataModel(UUID appUserUUID, String fileName, String fileSize) {
         this.appUserUUID = appUserUUID;
         this.fileName = fileName;
         this.fileSize = fileSize;
     }
 
-    public ImageMetaDataModel(String appUserUUID, String fileName, String fileSize, boolean isCover) {
+    public ImageMetaDataModel(UUID appUserUUID, String fileName, String fileSize, boolean isCover) {
         this.appUserUUID = appUserUUID;
         this.fileName = fileName;
         this.fileSize = fileSize;
@@ -27,11 +29,11 @@ public class ImageMetaDataModel {
     }
 
 
-    public String getFileUUID() {
+    public UUID getFileUUID() {
         return fileUUID;
     }
 
-    public String getAppUserUUID() {
+    public UUID getAppUserUUID() {
         return appUserUUID;
     }
 
@@ -47,7 +49,7 @@ public class ImageMetaDataModel {
         return isCover;
     }
 
-    public void setFileUUID(String fileUUID) {
+    public void setFileUUID(UUID fileUUID) {
         this.fileUUID = fileUUID;
     }
 

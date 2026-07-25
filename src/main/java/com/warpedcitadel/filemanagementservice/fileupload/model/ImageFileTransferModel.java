@@ -1,18 +1,20 @@
 package com.warpedcitadel.filemanagementservice.fileupload.model;
 
+import java.util.UUID;
+
 public class ImageFileTransferModel {
 
     private String oldFileName;
-    private String oldFileUUID;
+    private UUID oldFileUUID;
     private String newFileName;
-    private String newFileUUID;
+    private UUID newFileUUID;
 
     public ImageFileTransferModel() {
 
     }
 
-    public ImageFileTransferModel(String oldFileName, String oldFileUUID,
-                                  String newFileName, String newFileUUID) {
+    public ImageFileTransferModel(String oldFileName, UUID oldFileUUID,
+                                  String newFileName, UUID newFileUUID) {
 
         this.oldFileName = oldFileName;
         this.oldFileUUID = oldFileUUID;
@@ -25,7 +27,7 @@ public class ImageFileTransferModel {
         return oldFileName;
     }
 
-    public String getOldFileUUID() {
+    public UUID getOldFileUUID() {
         return oldFileUUID;
     }
 
@@ -33,7 +35,7 @@ public class ImageFileTransferModel {
         return newFileName;
     }
 
-    public String getNewFileUUID() {
+    public UUID getNewFileUUID() {
         return newFileUUID;
     }
 
@@ -42,7 +44,7 @@ public class ImageFileTransferModel {
         this.oldFileName = oldFileName;
     }
 
-    public void setOldFileUUID(String oldFileUUID) {
+    public void setOldFileUUID(UUID oldFileUUID) {
         this.oldFileUUID = oldFileUUID;
     }
 
@@ -50,7 +52,7 @@ public class ImageFileTransferModel {
         this.newFileName = newFileName;
     }
 
-    public void setNewFileUUID(String newFileUUID) {
+    public void setNewFileUUID(UUID newFileUUID) {
         this.newFileUUID = newFileUUID;
     }
 }

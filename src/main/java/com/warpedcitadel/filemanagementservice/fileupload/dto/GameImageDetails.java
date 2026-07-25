@@ -1,6 +1,8 @@
 package com.warpedcitadel.filemanagementservice.fileupload.dto;
 
+import java.util.UUID;
+
 public record GameImageDetails(
-        String gameProfileUUID,
+        UUID gameProfileUUID,
         boolean isCover
 ) {}

@@ -5,8 +5,9 @@ public enum FileStatus {
     NEW(1, "New file status"),
     PROCESSING(2, "Processing file status"),
     REVIEW(3, "Review needed status"),
-    ACTIVE(4, "Active file status"),
-    DELETED(5, "Deleted file status");
+    READY(4, "Ready to deploy status"),
+    DEPLOY(5, "Deploy to production status"),
+    DELETED(6, "Deleted file status");
 
 
     private final int code;

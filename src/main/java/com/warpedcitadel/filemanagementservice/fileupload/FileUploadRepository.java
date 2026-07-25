@@ -1,10 +1,10 @@
 package com.warpedcitadel.filemanagementservice.fileupload;
 
 
+import com.warpedcitadel.filemanagementservice.enums.FileStatus;
 import com.warpedcitadel.filemanagementservice.fileupload.model.FileMetaDataModel;
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageFileTransferModel;
 import com.warpedcitadel.filemanagementservice.fileupload.model.ImageMetaDataModel;
-import com.warpedcitadel.filemanagementservice.enums.FileStatus;
 import com.warpedcitadel.filemanagementservice.util.SQLFileReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +14,7 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class FileUploadRepository {
@@ -28,28 +29,38 @@ public class FileUploadRepository {
     }
 
 
-    public String recordFileMetaData(FileMetaDataModel file) {
+    public void recordFileMetaData(List<UUID> fileUUIDList) {
         String insertSQL = loadSQL.loadSQL("/upload/insert--record_filemetadata.sql");
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {
-            insertStatement.setString(1, file.getGameProfileUUID());
-            insertStatement.setString(2, file.getFileName());
-            insertStatement.setInt(3, file.getPlatformOS());
-            insertStatement.setString(4, file.getFileSize());
+
+            Object[] fileObjectArray = fileUUIDList.toArray(new Object[0]);
+            Array fileArray = connection.createArrayOf("uuid", fileObjectArray);
+
+            insertStatement.setObject(1, fileArray);
             ResultSet resultSet = insertStatement.executeQuery();
-            if (resultSet.next()) {
-                String fileUUID = resultSet.getString("file_uuid");
-                return fileUUID;
-            } else {
-                throw new RuntimeException("Failed to insert file metadata to the database");
+
+            int total = 0;
+            while (resultSet.next()) {
+                String fileName = resultSet.getString("file_name");
+                log.info("Transferring file ({}) to ({})",
+                        fileName, FileStatus.DEPLOY.getDescription());
+                total++;
             }
+            if (fileUUIDList.size() != total) {
+                log.error("Requested a transfer total of ({}) files, but only transferred ({})",
+                        fileUUIDList.size(), total);
+                throw new RuntimeException("Failed to transfer all files");
+            }
+            log.info("A total of ({}) files was transferred", total);
         } catch (SQLException exception) {
-            throw new RuntimeException("Could not find game profile with the UUID: " + file.getGameProfileUUID());
+            log.error("Failed to record game files Reason: ({})", exception.toString());
+            throw new RuntimeException("Failed to transfer game files");
         }
     }
 
 
-    public List<String> recordFileToStaging( List<FileMetaDataModel> files) {
+    public List<String> recordFileToStaging(List<FileMetaDataModel> files) {
         String insertSQL = loadSQL.loadSQL("/upload/insert--record_files_staging.sql");
         List<String> gameFileList = new ArrayList<>();
         try (Connection connection = wcDatabase.getConnection();
@@ -63,7 +74,7 @@ public class FileUploadRepository {
                 fileSizes[i] = file.getFileSize();
                 osPlatforms[i] = file.getPlatformOS();
             }
-            insertStatement.setString(1, files.getFirst().getGameProfileUUID());
+            insertStatement.setObject(1, files.getFirst().getGameProfileUUID());
             insertStatement.setArray(2, connection.createArrayOf("text", fileNames));
             insertStatement.setArray(3, connection.createArrayOf("text", fileSizes));
             insertStatement.setArray(4, connection.createArrayOf("smallint", osPlatforms));
@@ -81,12 +92,12 @@ public class FileUploadRepository {
     }
 
 
-    public void deleteStagingGameFiles(String gameProfileUUID) {
+    public void deleteStagingGameFiles(UUID gameProfileUUID) {
         String deleteSQL = loadSQL.loadSQL("/upload/delete--delete_staging_game_file_record.sql");
         List<String> imageList = new ArrayList<>();
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL, Statement.RETURN_GENERATED_KEYS)) {
-            deleteStatement.setString(1, gameProfileUUID);
+            deleteStatement.setObject(1, gameProfileUUID);
             ResultSet resultSet = deleteStatement.executeQuery();
             int i = 0;
             while (resultSet.next()) {
@@ -102,12 +113,12 @@ public class FileUploadRepository {
     }
 
 
-    public void updateFileStatus(String gameProfileUUID, int status) {
+    public void updateFileStatus(UUID gameProfileUUID, int status) {
         String updateSQL = loadSQL.loadSQL("/upload/update--update_file_status.sql");
         List<String> imageList = new ArrayList<>();
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement updateStatement = connection.prepareStatement(updateSQL, Statement.RETURN_GENERATED_KEYS)) {
-            updateStatement.setString(1, gameProfileUUID);
+            updateStatement.setObject(1, gameProfileUUID);
             updateStatement.setInt(2, status);
             ResultSet resultSet = updateStatement.executeQuery();
             int i = 0;
@@ -125,12 +136,12 @@ public class FileUploadRepository {
     }
 
 
-    public void recordGameImageMetaData(String gameProfileUUID) {
+    public void recordGameImageMetaData(UUID gameProfileUUID) {
         String insertSQL = loadSQL.loadSQL("/upload/insert--record_game_image_file.sql");
         List<String> gameImageList = new ArrayList<>();
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement insertStatement = connection.prepareStatement(insertSQL)) {
-            insertStatement.setString(1, gameProfileUUID);
+            insertStatement.setObject(1, gameProfileUUID);
             try (ResultSet resultSet = insertStatement.executeQuery()) {
                 while (resultSet.next()) {
                     gameImageList.add(resultSet.getString("file_name"));
@@ -158,7 +169,7 @@ public class FileUploadRepository {
                 fileSizes[i] = file.getFileSize();
                 isCover[i] = file.getIsCover();
             }
-            insertStatement.setString(1, files.getFirst().getAppUserUUID());
+            insertStatement.setObject(1, files.getFirst().getAppUserUUID());
             insertStatement.setArray(2, connection.createArrayOf("text", fileNames));
             insertStatement.setArray(3, connection.createArrayOf("text", fileSizes));
             insertStatement.setArray(4, connection.createArrayOf("bool", isCover));
@@ -177,12 +188,12 @@ public class FileUploadRepository {
     }
 
 
-    public void deleteStagingGameImages(String gameProfileUUID) {
+    public void deleteStagingGameImages(UUID gameProfileUUID) {
         String deleteSQL = loadSQL.loadSQL("/upload/delete--delete_staging_game_image_record.sql");
         List<String> imageList = new ArrayList<>();
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL, Statement.RETURN_GENERATED_KEYS)) {
-            deleteStatement.setString(1, gameProfileUUID);
+            deleteStatement.setObject(1, gameProfileUUID);
             ResultSet resultSet = deleteStatement.executeQuery();
             int i = 0;
             while (resultSet.next()) {
@@ -204,13 +215,13 @@ public class FileUploadRepository {
         ImageFileTransferModel profileImage = new ImageFileTransferModel();
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
-            insertStatement.setString(1, file.getAppUserUUID());
+            insertStatement.setObject(1, file.getAppUserUUID());
             ResultSet resultSet = insertStatement.executeQuery();
             if (resultSet.next()) {
                  profileImage.setNewFileName(resultSet.getString("new_file_name"));
-                 profileImage.setNewFileUUID(resultSet.getString("new_img_uuid"));
+                 profileImage.setNewFileUUID((UUID) resultSet.getObject("new_img_uuid"));
                  profileImage.setOldFileName(resultSet.getString("old_file_name"));
-                 profileImage.setOldFileUUID(resultSet.getString("old_img_uuid"));
+                 profileImage.setOldFileUUID((UUID) resultSet.getObject("old_img_uuid"));
             }
         } catch (SQLException exception) {
             log.error("Failed to record profile image to staging for user profile ID: ({}) Reason: ({})",
@@ -225,13 +236,13 @@ public class FileUploadRepository {
         String insertSQL = loadSQL.loadSQL("/upload/insert--record_image_metadata.sql");
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement insertStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
-            insertStatement.setString(1, file.getAppUserUUID());
+            insertStatement.setObject(1, file.getAppUserUUID());
             insertStatement.setString(2, file.getFileName());
             insertStatement.setString(3, file.getFileSize());
             ResultSet resultSet = insertStatement.executeQuery();
             if (resultSet.next()) {
                 file.setFileName(resultSet.getString("file_name"));
-                file.setFileUUID(resultSet.getString("img_uuid"));
+                file.setFileUUID((UUID) resultSet.getObject("img_uuid"));
             }
         } catch (SQLException exception) {
             log.error("Failed to record profile image for user profile ID: ({}) Reason: ({})",
@@ -246,11 +257,11 @@ public class FileUploadRepository {
         String deleteSQL = loadSQL.loadSQL("/upload/delete--delete_staging_image_record.sql");
         try (Connection connection = wcDatabase.getConnection();
              PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL, Statement.RETURN_GENERATED_KEYS)) {
-            deleteStatement.setString(1, file.getAppUserUUID());
+            deleteStatement.setObject(1, file.getAppUserUUID());
             ResultSet resultSet = deleteStatement.executeQuery();
             if (resultSet.next()) {
                 file.setFileName(resultSet.getString("file_name"));
-                file.setFileUUID(resultSet.getString("img_uuid"));
+                file.setFileUUID((UUID) resultSet.getObject("img_uuid"));
                 log.warn("Deleting profile image ({}), file ID: ({}) from user profile ID: ({})",
                         file.getFileName(), file.getFileUUID(), file.getAppUserUUID());
             }

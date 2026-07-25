@@ -6,7 +6,9 @@ public class FileModel {
 
     UUID gameProfileUUID;
     UUID fileUUID;
+    String fileName;
     int gameStatus;
+    int platformOS;
 
     public FileModel() {
 
@@ -17,6 +19,14 @@ public class FileModel {
         this.gameProfileUUID = gameProfileUUID;
         this.fileUUID = fileUUID;
         this.gameStatus = gameStatus;
+    }
+
+    public FileModel(UUID gameProfileUUID, UUID fileUUID, String fileName, int gameStatus, int platformOS) {
+        this.gameProfileUUID = gameProfileUUID;
+        this.fileUUID = fileUUID;
+        this.fileName = fileName;
+        this.gameStatus = gameStatus;
+        this.platformOS = platformOS;
     }
 
 
@@ -32,13 +42,23 @@ public class FileModel {
         return fileUUID;
     }
 
+    public String getFileName() {
+        return fileName;
+    }
+
+    public int getPlatformOS() {
+        return platformOS;
+    }
+
 
     @Override
     public String toString() {
         return "FileModel{" +
                 "gameProfileUUID=" + gameProfileUUID +
                 ", fileUUID=" + fileUUID +
+                ", fileName='" + fileName + '\'' +
                 ", gameStatus=" + gameStatus +
+                ", platformOS=" + platformOS +
                 '}';
     }
 }

@@ -34,16 +34,17 @@ public class FileTransferService {
     }
 
 
-    public void extractZip(RequestData requestData) {
+    public void extractZip(List<RequestData> requestData) {
         long start = System.currentTimeMillis();
-        String prefix = "games/" + requestData.objectUUID() + "/files/" + requestData.fileName();
-        ResponseInputStream<GetObjectResponse> object = s3Client.getObject(
-                GetObjectRequest
-                        .builder()
-                        .bucket(validBucketName)
-                        .key(prefix)
-                        .build()
-        );
+        for (int i = 0; requestData.size() > i; i++) {
+            String prefix = "games/" + requestData.get(i).objectUUID() + "/files/" + requestData.get(i).fileName();
+            ResponseInputStream<GetObjectResponse> object = s3Client.getObject(
+                    GetObjectRequest
+                            .builder()
+                            .bucket(validBucketName)
+                            .key(prefix)
+                            .build()
+            );
             try (ZipInputStream zip = new ZipInputStream(object)) {
                 ZipEntry entry;
                 while ((entry = zip.getNextEntry()) != null) {
@@ -66,14 +67,15 @@ public class FileTransferService {
                     zip.closeEntry();
                     long elapsed = System.currentTimeMillis() - start;
                     log.info("Unzipped and transferred file ({}) contents from ({}) bucket to ({}) bucket in ({}) ms for game profile ID: ({})",
-                    requestData.fileName(), validBucketName, gameBucketName, elapsed, requestData.objectUUID());
-            }
-        } catch (IOException | S3Exception exception) {
+                            requestData.get(i).fileName(), validBucketName, gameBucketName, elapsed, requestData.get(i).objectUUID());
+                }
+            } catch (IOException | S3Exception exception) {
                 log.error("Failed to unzip and transfer ({}) file contents from ({}) bucket to ({}) bucket for game profile ID: ({}) Reason: ({})",
-                        requestData.fileName(), validBucketName, gameBucketName, requestData.objectUUID(), exception.toString());
+                        requestData.get(i).fileName(), validBucketName, gameBucketName, requestData.get(i).objectUUID(), exception.toString());
                 throw new RuntimeException("Failed transfer file contents of "
-                    + requestData.fileName()
-                    + " to storage");
+                        + requestData.get(i).fileName()
+                        + " to storage");
+            }
         }
     }
 

@@ -63,8 +63,10 @@ public class FileManagementRepository {
     }
 
 
-    public void updateFileStatus(List<FileModel> files) {
+    public List<FileModel> updateFileStatus(List<FileModel> files) {
         String updateSQL = loadSQL.loadSQL("/management/update--update_file_status.sql");
+
+        List<FileModel> fileResults = new ArrayList<>();
         try (Connection connection = database.getConnection();
              PreparedStatement updateStatement = connection.prepareStatement(updateSQL, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -87,14 +89,25 @@ public class FileManagementRepository {
             int total = 0;
             while (resultSet.next()) {
                 String name = resultSet.getString("file_name");
-                String UUID = resultSet.getString("file_uuid");
+                UUID fileID = (UUID) resultSet.getObject("file_uuid");
                 int status = resultSet.getInt("status_type_id");
-                log.info("Updated file: ({}) file ID: ({}) to ({})",
-                        name, UUID, FileStatus.getStatusByID(status));
+                UUID gameProfileID = (UUID) resultSet.getObject("game_profile_uuid");
+                int platformID = resultSet.getInt("platform_id");
+                log.info("Updated file: ({}) file ID: ({}) to ({}) for game profile ID: ({})",
+                        name, fileID, FileStatus.getStatusByID(status), gameProfileID);
+                FileModel file = new FileModel(
+                        gameProfileID,
+                        fileID,
+                        name,
+                        status,
+                        platformID
+                );
+                fileResults.add(file);
                 total++;
             }
             log.info("Successfully updated a total ({}) files statuses to ({})",
                     total, FileStatus.getStatusByID(files.getFirst().getGameStatus()));
+            return fileResults;
         } catch (SQLException exception) {
             log.error("Failed to update files status to ({}), Reason ({})",
                     FileStatus.getStatusByID(files.getFirst().getGameStatus()), exception.toString());

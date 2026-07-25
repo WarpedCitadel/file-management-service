@@ -315,9 +315,9 @@ public class FileUploadService {
     }
 
 
-    private boolean isStaticImage(String fileUUID) {
-        String[] staticAssets = new String[]{"019f7b16-635a-7c13-b15d-ed3c75ad61f9"};
-        for (String file : staticAssets) {
+    private boolean isStaticImage(UUID fileUUID) {
+        UUID[] staticAssets = new UUID[]{UUID.fromString("019f7b16-635a-7c13-b15d-ed3c75ad61f9")};
+        for (UUID file : staticAssets) {
             if (fileUUID.equals(file)) {
                 return true;
             }

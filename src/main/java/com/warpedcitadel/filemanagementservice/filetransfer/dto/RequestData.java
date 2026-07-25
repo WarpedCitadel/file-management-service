@@ -1,6 +1,8 @@
 package com.warpedcitadel.filemanagementservice.filetransfer.dto;
 
+import java.util.UUID;
+
 public record RequestData(
-        String objectUUID,
+        UUID objectUUID,
         String fileName
 ) {}

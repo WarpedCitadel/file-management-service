@@ -6,6 +6,9 @@ import com.warpedcitadel.filemanagementservice.filemanagement.dto.*;
 import com.warpedcitadel.filemanagementservice.filemanagement.model.FileDataModel;
 import com.warpedcitadel.filemanagementservice.filemanagement.model.FileModel;
 import com.warpedcitadel.filemanagementservice.filemanagement.model.SearchAttributesModel;
+import com.warpedcitadel.filemanagementservice.filetransfer.FileTransferService;
+import com.warpedcitadel.filemanagementservice.filetransfer.dto.RequestData;
+import com.warpedcitadel.filemanagementservice.fileupload.FileUploadRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -15,15 +18,21 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class FileManagementService {
 
     private final FileManagementRepository fileManagementRepository;
+    private final FileTransferService transferService;
+    private final FileUploadRepository fileUploadRepository;
     private static final Logger log = LoggerFactory.getLogger(FileManagementService.class);
 
-    public FileManagementService(FileManagementRepository fileManagementRepository) {
+    public FileManagementService(FileManagementRepository fileManagementRepository,
+                                 FileTransferService transferService, FileUploadRepository fileUploadRepository) {
         this.fileManagementRepository = fileManagementRepository;
+        this.transferService = transferService;
+        this.fileUploadRepository = fileUploadRepository;
     }
 
 
@@ -86,7 +95,33 @@ public class FileManagementService {
             );
             files.add(fileModel);
         }
-        fileManagementRepository.updateFileStatus(files);
+        List<FileModel> fileResults = fileManagementRepository.updateFileStatus(files);
+        List<FileModel> fileTransfer = new ArrayList<>();
+        List<UUID> recordFile = new ArrayList<>();
+        for (int i = 0; fileResults.size() > i; i++) {
+            int statusID = fileResults.get(i).getGameStatus();
+            if (statusID == FileStatus.READY.getCode()) {
+                recordFile.add(fileResults.get(i).getFileUUID());
+                fileTransfer.add(fileResults.get(i));
+            }
+        }
+        fileUploadRepository.recordFileMetaData(recordFile);
+        List<RequestData> browserFile = new ArrayList<>();
+        List<RequestData> downLoadable = new ArrayList<>();
+        for (int i = 0; fileTransfer.size() > i; i++) {
+            int platformOS = fileResults.get(i).getPlatformOS();
+            RequestData file = new RequestData(
+                    fileResults.get(i).getGameProfileUUID(),
+                    fileResults.get(i).getFileName()
+            );
+            if (platformOS == PlatformOS.BROWSER.getCode()) {
+                browserFile.add(file);
+            } else {
+                downLoadable.add(file);
+            }
+        }
+        transferService.extractZip(browserFile);
+        transferService.transferGameFilesToS3(downLoadable);
     }
 
 

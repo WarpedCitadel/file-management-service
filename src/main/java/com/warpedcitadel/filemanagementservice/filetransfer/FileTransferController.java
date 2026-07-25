@@ -25,7 +25,7 @@ public class FileTransferController {
     }
 
     @PostMapping("/transferHtml5Game")
-    public ResponseEntity<ApiResponse<String>> unzipFileToS3(@RequestBody RequestData requestData,
+    public ResponseEntity<ApiResponse<String>> unzipFileToS3(@RequestBody List<RequestData> requestData,
                                                                             WebRequest request) {
 
         fileTransferService.extractZip(requestData);

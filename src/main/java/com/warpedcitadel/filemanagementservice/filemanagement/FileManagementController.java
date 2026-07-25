@@ -45,7 +45,7 @@ public class FileManagementController {
         fileManagementService.updateFileStatus(files);
         ApiResponse<String> gameProfileDetails = new ApiResponse<>("Update",
                 HttpStatus.OK.value(),
-                "Files Statuses Updated",
+                "File Status Updated",
                 request.getDescription(false).replace("uri=", ""),
                 Instant.now(Clock.systemUTC()));
         return new ResponseEntity<>(gameProfileDetails, HttpStatus.OK);

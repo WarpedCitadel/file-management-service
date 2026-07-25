@@ -1,6 +1,8 @@
 package com.warpedcitadel.filemanagementservice.fileupload.dto;
 
+import java.util.UUID;
+
 public record GameFileDetails(
-        String gameProfileUUID,
+        UUID gameProfileUUID,
         int platformOS
 ) {}

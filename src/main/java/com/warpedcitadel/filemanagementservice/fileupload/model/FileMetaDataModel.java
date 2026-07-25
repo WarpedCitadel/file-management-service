@@ -1,8 +1,10 @@
 package com.warpedcitadel.filemanagementservice.fileupload.model;
 
+import java.util.UUID;
+
 public class FileMetaDataModel {
 
-    private String gameProfileUUID;
+    private UUID gameProfileUUID;
     private String fileName;
     private int platformOS;
     private String fileSize;
@@ -13,7 +15,7 @@ public class FileMetaDataModel {
     }
 
 
-    public FileMetaDataModel(String gameProfileUUID, String fileName, int platformOS, String fileSize) {
+    public FileMetaDataModel(UUID gameProfileUUID, String fileName, int platformOS, String fileSize) {
         this.gameProfileUUID = gameProfileUUID;
         this.fileName = fileName;
         this.platformOS = platformOS;
@@ -21,7 +23,7 @@ public class FileMetaDataModel {
     }
 
 
-    public String getGameProfileUUID() {
+    public UUID getGameProfileUUID() {
         return gameProfileUUID;
     }
 
